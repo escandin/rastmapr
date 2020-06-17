@@ -1,3 +1,56 @@
+#
+library(RStoolbox)
+library(raster)
+library(rgdal)
+library(aRn)
+library(fitdistrplus)
+library(ggplot2)
+
+# MAC
+#path="/Users/tug61163/Documents/PROJECTS/NASAGeo/Manuscripts/ImistManuscript/Orinoquia"
+# WINDOWS
+path=#("X:/VictorShare/s3dFiles/Pucallpa")
+("X:/VictorShare/s3dFiles/Orinoquia")
+("X:/VictorShare/s3dFiles/Mexico")#
+setwd(path)
+dir.create('tempfiledir')
+tempdir=paste(getwd(),'tempfiledir', sep="/")
+rasterOptions(tmpdir=tempdir)
+
+# Extract data from files
+## path
+## shape, rate, kd over time
+
+
+# Using masks
+## ECDF before and after iterations (gamma for s3d and normal for bands)
+## 
+
+# Retrieve infomrmation from R objects
+rdata=list.files('.', pattern='.RData')
+names=c("05057CCA", "06057CCA", "05057", "06057")  # ORINOQUIA
+names=c("06066", "07066") # PUCALLPA
+names=c("026046", "026047") # MEXICO
+for(i in 1:length(rdata)){
+  load(rdata[i])
+  data=s3dmod$paramstats[[2]]
+  data$location=rep(substr(path, 25, nchar(path)), nrow(data))
+  data$names=rep(names[i], nrow(data))
+  if(i==1){dataset=data} else{dataset=rbind(dataset,data)}
+}
+pdf(file="gammaResults.pdf",width=4,height=4,paper='special') 
+  ggplot(dataset, aes(x=dataset$iter, y=dataset$ksD, col=names)) + 
+    geom_line() + ylim(0, 0.3)
+  ggplot(dataset, aes(x=dataset$iter, y=dataset$rate, col=names)) +
+    geom_line() + ylim(0, 0.4)
+  ggplot(dataset, aes(x=dataset$iter, y=dataset$shape, col=names)) + 
+    geom_line() + ylim(0, 2.5)
+dev.off()
+
+
+
+s3dmod$paramstats[[2]]
+
 
 calp=s3dmod
 par(mfrow=c(2,3))
