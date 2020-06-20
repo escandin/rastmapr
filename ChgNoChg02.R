@@ -5,8 +5,9 @@ library(aRn)
 library(fitdistrplus)
 
 # MAC
-path="/Users/tug61163/Documents/PROJECTS/NASAGeo/Manuscripts/ImistManuscript/Orinoquia"
-path="/Users/tug61163/Documents/PROJECTS/NASAGeo/Manuscripts/s3dManuscript/Pucallpa"
+path="/Users/tug61163/Documents/PROJECTS/NASAGeo/Manuscripts/ChgNoChgManuscript/Orinoquia"
+path="/Users/tug61163/Documents/PROJECTS/NASAGeo/Manuscripts/ChgNoChgManuscript/Pucallpa"
+path="/Users/tug61163/Documents/PROJECTS/NASAGeo/Manuscripts/ChgNoChgManuscript/Mexico"
 # WINDOWS
 #path=#("X:/VictorShare/aRnFiles/Pucallpa")
   #("X:/VictorShare/aRnFiles/Orinoquia")
@@ -40,11 +41,9 @@ for (i in 3:4){ # MAKE SURE THE selected elements correspond to the sat.nm in EE
 stacks=list()
 normbands=seq(1,6)
 stacknames<- list.files('.', pattern='mskd_.grd')
-usedstacknames=stacknames[c(1,2,3,13)]
-#for (i in 1:length(stacknames)){
-for (i in length(usedstacks)){
-#for (i in 1:13){
-  stacks[[i]]=raster::stack(stacknames[usedstacks[i]], bands=normbands)
+#usedstacknames=stacknames[c(1,2,3,13)]
+for (i in 1:length(stacknames)){
+  stacks[[i]]=raster::stack(stacknames[[i]], bands=normbands)
   #names(stacks[[i]])=layernames[normbands]
   #writeRaster(stacks[[i]], filename=paste(names(stacks)[i], "mskd_", sep="_"), 
   #            format="raster",  datatype="INT2S")
@@ -53,7 +52,8 @@ names(stacks)= substr(stacknames, 1, nchar(stacknames)-10)
 #plotRGB(stacks[[1]], r=4, g=3, b=2, stretch="lin")
 
 ref=c(1,2) 
-tar=c(3,6)
+tar=c(3,4)
+pvalpif=1e-2 # Orinoquia, Mexico
 #pvalpif=1e-3 # Pucallpa
 #refvec=seq(reftar[1], reftar[length(reftar)-1], 2)
 
