@@ -91,18 +91,21 @@ nochg2<-function (thresraster, pvalue = 1e-02, distype="gamma",
   # propsamp: proportion of pixels to sample for fitting the statistical distribution.
   # degfree:  only applies for chisquare. It sould be equal to the number of layers in the 
   #      input raster stacks
-  # 
+  # distype: "gamma", "chisq", ("weibull", "nomal" "negative exponential") 
+
   print("calculating change/no-change mask")
+  if (!is.numeric(propsamp) & propsamp<0 & propsamp>1){
+    stop("propsamp should be a number between 0 and 1")
+  }
+  samp=raster::sampleRandom(thresraster, length(thresraster)*propsamp)
   if(distype=="chisq"){
     threshold = qchisq(pvalue, degfree)
-  } else if (distype=="gamma"){
-    if (!is.numeric(propsamp) & propsamp<0 & propsamp>1){
-        stop("propsamp should be a number between 0 and 1")
-    }
+    simulated=rchisq(length(samp), degfree)
+    ks<-ks.test(samp, simulated)
+    fit.stats=list(samp, simulated, ks)} else {
       require(fitdistrplus)
     #if(cca==TRUE) {thresraster=thresraster[[1]]}
-      samp=raster::sampleRandom(thresraster, length(thresraster)*propsamp)
-      fit.gamma <- fitdistrplus::fitdist(samp, dist =distype)
+      fit.stats <- fitdistrplus::fitdist(samp, dist =distype)
       threshold= qgamma(pvalue, shape=fit.gamma$estimate[1],
                         rate=fit.gamma$estimate[2])
   }
@@ -110,8 +113,7 @@ nochg2<-function (thresraster, pvalue = 1e-02, distype="gamma",
     warning("the pvalue selected produces a threshold that is larger that the minimum 
         value in thresraster producing an NA. Select a higher pvalue to produce a valid threshold mask")
   nochgmsk=NA} else {nochgmsk=maskfun(thresraster, threshold, NA, 1)}
-
-  if (distype=="gamma"){nochgmsk=list(nochgmsk, fit.gamma)}
+  nochgmsk=list(nochgmsk, fit.stats)
   return(nochgmsk)
 }
 calibrationParameters2<-function (ref, tar, threshMask){#, 
@@ -180,7 +182,7 @@ calibrationParameters2<-function (ref, tar, threshMask){#,
 s3d <- function(strips, cca=FALSE, distype="gamma", distsamp=0.01, pval.pif = 1e-02, pval.chg=0.99,
                 minPIF=5, thres.shape=.005, thres.rate=.005, maxiter=30, prefix="", 
                 norm.ext=NULL,fitline=TRUE, writemasks=TRUE){ #degfree = nlayers(strips[[2L]]),
-  # is3d: Iterated Sum of the Squared Standaradized Differences iterates the selection of
+  # s3d: Iterated Sum of the Squared Standaradized Differences iterates the selection of
   # PIFs defined by a pval.tif threshold by excluding in each iteration the pixels 
   # with the largest change based on the level of probability specified by the pval.chg parameter.
   # strips:  strips: a list containing the target and reference raster stacks respectively
@@ -218,8 +220,12 @@ s3d <- function(strips, cca=FALSE, distype="gamma", distsamp=0.01, pval.pif = 1e
   # obtain a first no change mask
   print("calculating initial parameters")
   thrs <- thresraster2(strips[[2L]], strips[[1L]], cca=cca)#, degfree = nlayers(strips[[2L]])-1,
-  noch <- nochg2(thrs, pvalue= pval.pif, distype=distype, propsamp=distsamp)
-  
+  if (distype=="chisq"){
+    noch <- nochg2(thrs, pvalue= pval.pif, distype=distype, 
+                   propsamp=distsamp, degfree=nlayers(strips[[1]]))
+  } else {
+    noch <- nochg2(thrs, pvalue= pval.pif, distype=distype, propsamp=distsamp)
+  }
   # iterate until the intercept values are stabilized
   i=1
   if(fitline==TRUE){
@@ -251,26 +257,32 @@ s3d <- function(strips, cca=FALSE, distype="gamma", distsamp=0.01, pval.pif = 1e
     }
     lmparamtot=lmparam
   }
-  if(distype=="gamma"){
-    gammastat=gofstat(noch[[2]])
-    gammaparam=data.frame(matrix(nrow=1,ncol=4))
-    names(gammaparam)=c("iter", "ksD", "shape", "rate")
-    gammaparam$iter <- i
-    gammaparam$ksD=gammastat$ks
-    gammaparam$shape=noch[[2]]$estimate[1]
-    gammaparam$rate=noch[[2]]$estimate[2]
-    gammaparamtot=gammaparam
+  
+  if(distype=="chisq"){
+    distparam=data.frame(cbind(i, noch[[2]][[3]][[1]], noch[[2]][[3]][[2]]))
+    names(distparam)=c('iter', 'ksD', "pval")
+    } else {
+    diststat=gofstat(noch[[2]])
+    distparam$ksD=diststat$ks
+    distparam$iter <- i
+    distparam=data.frame(matrix(nrow=1,ncol=4))
+    names(distparam)=c("iter", "ksD", "shape", "rate")
+    distparam$shape=noch[[2]]$estimate[1]
+    distparam$rate=noch[[2]]$estimate[2]
   }
+  distparamtot=distparam
  
   print('iterating PIF extraction until the change in the distribution parameters are below thres.shape and thres.rate values')
   repeat{
     i <- i+1
-    noch <- nochg2(thrs, pval = pval.chg) 
+    if (distype=="chisq"){
+      noch <- nochg2(thrs, pvalue= pval.chg, distype=distype, 
+                     propsamp=distsamp, degfree=nlayers(strips[[1]]))
+    } else { noch <- nochg2(thrs, pvalue= pval.chg, distype=distype, propsamp=distsamp)}
+ 
     if (writemasks==TRUE){
-      if(distype=="chisq"){
-        raster::writeRaster(noch, paste(prefix, paste(paste("removeChgmsk", i-1, sep=""), "tif", sep="."), sep="_"))
-      } else {raster::writeRaster(noch[[1]], paste(prefix, paste(paste("removeChgMsk", i-1, sep=""), "tif", sep="."), sep="_"))
-      }
+      raster::writeRaster(noch[[1]], 
+                  paste(prefix, paste(paste("removeChgMsk", i-1, sep=""), "tif", sep="."), sep="_"))
     }
       #plot(noch)
     stripsmskd=list(strips[[1]]*noch[[1]], strips[[2]]*noch[[1]])
@@ -278,7 +290,12 @@ s3d <- function(strips, cca=FALSE, distype="gamma", distsamp=0.01, pval.pif = 1e
     gc()
     
     thrs <- thresraster2(stripsmskd[[2L]], stripsmskd[[1L]], cca=cca)#, degfree = nlayers(strips[[2L]])-1,
-    noch <- nochg2(thrs, pvalue= pval.pif, distype=distype, propsamp=distsamp)
+    if (distype=="chisq"){
+      noch <- nochg2(thrs, pvalue= pval.pif, distype=distype, 
+                     propsamp=distsamp, degfree=nlayers(strips[[1]]))
+    } else {
+      noch <- nochg2(thrs, pvalue= pval.pif, distype=distype, propsamp=distsamp)
+    }
     
     if(fitline==TRUE){
       if (class(noch[[1]])== "RasterLayer"){      #is.na(noch[[1]])==FALSE){
@@ -308,29 +325,35 @@ s3d <- function(strips, cca=FALSE, distype="gamma", distsamp=0.01, pval.pif = 1e
       }
       lmparamtot=rbind(lmparamtot, lmparam)
     }
-    if(distype=="gamma"){
-      gammastat=gofstat(noch[[2]])
-      gammaparam$iter <- i
-      gammaparam$ksD=gammastat$ks
-      gammaparam$shape=noch[[2]]$estimate[1]
-      gammaparam$rate=noch[[2]]$estimate[2]
-      gammaparamtot=rbind(gammaparamtot, gammaparam)
+    if(distype=="chisq"){
+      distparam=data.frame(cbind(noch[[2]][[3]][[1]], noch[[2]][[3]][[2]]))
+      distparam$iter <- i
+      names(distparam)=c('iter', 'ksD', "pval")
+    } else {
+      diststat=gofstat(noch[[2]])
+      distparam$iter <- i
+      distparam$ksD=gammastat$ks
+      distparam$shape=noch[[2]]$estimate[1]
+      distparam$rate=noch[[2]]$estimate[2]
     }
+    distparamtot=rbind(distparamtot, distparam)
     print(paste(i, "iterations processed", sep=" "))
     
-    #chg.intp=abs(lmparamtot$intercept[which(lmparamtot$iter==i)]-
-    #               lmparamtot$intercept[which(lmparamtot$iter==(i-1))])
-    #chg.slope=abs(lmparamtot$slope[which(lmparamtot$iter==i)]-
-    #                lmparamtot$slope[which(lmparamtot$iter==(i-1))])
-    #if (max(chg.intp)<thres.intp & max(chg.slope)<thres.slope) {
-    #  break
-    chg.shape=abs(gammaparamtot$shape[which(gammaparamtot$iter==i)]-
-                    gammaparamtot$shape[which(gammaparamtot$iter==i-1)])
-    chg.rate=abs(gammaparamtot$rate[which(gammaparamtot$iter==i)]-
-                    gammaparamtot$rate[which(gammaparamtot$iter==i-1)])
+    if (distype=="chisqs"){
+    chg.intp=abs(lmparamtot$intercept[which(lmparamtot$iter==i)]-
+                   lmparamtot$intercept[which(lmparamtot$iter==(i-1))])
+    chg.slope=abs(lmparamtot$slope[which(lmparamtot$iter==i)]-
+                    lmparamtot$slope[which(lmparamtot$iter==(i-1))])
+    if (max(chg.intp)<thres.intp & max(chg.slope)<thres.slope) {
+      break
+    else {
+      chg.shape=abs(distparamtot$shape[which(distparamtot$iter==i)]-
+                    distparamtot$shape[which(distparamtot$iter==i-1)])
+      chg.rate=abs(distparamtot$rate[which(distparamtot$iter==i)]-
+                    distparamtot$rate[which(distparamtot$iter==i-1)])
     if (max(chg.shape)<thres.shape & max(chg.rate)<thres.rate) {
       break
-    }
+    }}
     if (i==maxiter){
       break
     }
@@ -352,15 +375,17 @@ s3d <- function(strips, cca=FALSE, distype="gamma", distsamp=0.01, pval.pif = 1e
     plot(calp$data[[b]][,1]~calp$data[[b]][,2], xlab="target", ylab="reference")
     abline(unlist(calp$parameters[[b]][1])[1], unlist(calp$parameters[[b]][1])[2])
   }
-  if (distype=="gamma"){
+  if (distype=="chisq"){
+    
+  } else {
     par(mfrow=c(2,2))
-    plot(gammaparamtot$ksD~gammaparamtot$iter, xlab="iter", ylab="ksD")
-    plot(gammaparamtot$shape~gammaparamtot$iter, xlab="iter", ylab="shape")
-    plot(gammaparamtot$rate~gammaparamtot$iter, xlab="iter", ylab="rate")
-    plot(gammaparamtot$rate~gammaparamtot$shape, xlab="shape", ylab="rate")
-    paramstats=list(lmparamtot, gammaparamtot)
-    names(paramstats)=c('lmparam', "gammaparam")
-  } else {paramstats=lmparamtot}
+    plot(distparamtot$ksD~distparamtot$iter, xlab="iter", ylab="ksD")
+    plot(distparamtot$shape~distparamtot$iter, xlab="iter", ylab="shape")
+    plot(distparamtot$rate~distparamtot$iter, xlab="iter", ylab="rate")
+    plot(distparamtot$rate~distparamtot$shape, xlab="shape", ylab="rate")
+    paramstats=list(lmparamtot, distparamtot)
+    names(paramstats)=c('lmparam', "distparam")
+  } #else {paramstats=lmparamtot}
   out=list(thrs[[1]], noch, calp[[1]], calp[[2]], paramstats)
   names(out)=c("sumstandardizediff", "noch", "data", "parameters", "paramstats")
   return(out)

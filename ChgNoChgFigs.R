@@ -7,7 +7,8 @@ library(fitdistrplus)
 library(ggplot2)
 
 # MAC
-#path="/Users/tug61163/Documents/PROJECTS/NASAGeo/Manuscripts/ImistManuscript/Orinoquia"
+path="/Users/tug61163/Documents/PROJECTS/NASAGeo/Manuscripts/ImistManuscript/Orinoquia"
+path="/Users/tug61163/Documents/PROJECTS/NASAGeo/Manuscripts/ImistManuscript/Pucallpa"
 # WINDOWS
 path=#("X:/VictorShare/s3dFiles/Pucallpa")
 ("X:/VictorShare/s3dFiles/Orinoquia")
@@ -29,7 +30,7 @@ rasterOptions(tmpdir=tempdir)
 # Retrieve infomrmation from R objects
 rdata=list.files('.', pattern='.RData')
 names=c("05057CCA", "06057CCA", "05057", "06057")  # ORINOQUIA
-names=c("06066", "07066") # PUCALLPA
+names=c("07066CCA", "06066CCA", "06066", "07066") # PUCALLPA
 names=c("026046", "026047") # MEXICO
 for(i in 1:length(rdata)){
   load(rdata[i])

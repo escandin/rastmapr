@@ -7,9 +7,10 @@ library(fitdistrplus)
 # MAC
 path="/Users/tug61163/Documents/PROJECTS/NASAGeo/Manuscripts/ImistManuscript/Orinoquia"
 path="/Users/tug61163/Documents/PROJECTS/NASAGeo/Manuscripts/s3dManuscript/Pucallpa"
+
 # WINDOWS
-#path=#("X:/VictorShare/aRnFiles/Pucallpa")
-  #("X:/VictorShare/aRnFiles/Orinoquia")
+path=#("X:/VictorShare/aRnFiles/Pucallpa")
+  ("X:/VictorShare/s3dFiles/Orinoquia/OutputsTestData")
 #("X:/VictorShare/aRnFiles/Mexico")#
 setwd(path)
 dir.create('tempfiledir')
@@ -36,7 +37,7 @@ for (i in 3:4){ # MAKE SURE THE selected elements correspond to the sat.nm in EE
               format="raster",  datatype="INT2S") # the raster format is to preserve the band names
 }
 
-# Retrieve datasets as a stack
+####### Retrieve datasets as a stack
 stacks=list()
 normbands=seq(1,6)
 stacknames<- list.files('.', pattern='mskd_.grd')
@@ -52,11 +53,6 @@ for (i in length(usedstacks)){
 names(stacks)= substr(stacknames, 1, nchar(stacknames)-10)
 #plotRGB(stacks[[1]], r=4, g=3, b=2, stretch="lin")
 
-ref=c(1,2) 
-tar=c(3,6)
-#pvalpif=1e-3 # Pucallpa
-#refvec=seq(reftar[1], reftar[length(reftar)-1], 2)
-
 for(i in 1:length(ref)){
   instacks=list(stacks[[tar[[i]]]], stacks[[ref[[i]]]])
   names(instacks)=c(stacknames[[tar[[i]]]], stacknames[[ref[[i]]]])
@@ -65,6 +61,33 @@ for(i in 1:length(ref)){
              prefix=names(instacks)[1])
   save(s3dmod, file=paste(paste('s3d_CCA',names(instacks)[1], sep="_"),  "RData", sep="."))
 }
+
+
+#######################################################
+##### DEBUGGING TESTS
+## For test data
+load("testdata.RData")
+
+###### Arguments from s3d
+### Adjusted
+cca=FALSE
+pval.pif = 1e-02 
+distype="chisq"
+
+### Default
+strips=strips
+distsamp=0.01
+pval.chg=0.99
+minPIF=5
+thres.shape=.003
+thres.rate=.003
+maxiter=30 
+prefix="test"
+norm.ext=NULL
+fitline=TRUE
+writemasks=TRUE
+#pvalpif=1e-3 # Pucallpa
+#refvec=seq(reftar[1], reftar[length(reftar)-1], 2)
 
 
 
