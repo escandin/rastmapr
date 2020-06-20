@@ -5,15 +5,9 @@ library(aRn)
 library(fitdistrplus)
 
 # MAC
-<<<<<<< HEAD
 path="/Users/tug61163/Documents/PROJECTS/NASAGeo/Manuscripts/ImistManuscript/Orinoquia"
 path="/Users/tug61163/Documents/PROJECTS/NASAGeo/Manuscripts/s3dManuscript/Pucallpa"
 
-=======
-path="/Users/tug61163/Documents/PROJECTS/NASAGeo/Manuscripts/ChgNoChgManuscript/Orinoquia"
-path="/Users/tug61163/Documents/PROJECTS/NASAGeo/Manuscripts/ChgNoChgManuscript/Pucallpa"
-path="/Users/tug61163/Documents/PROJECTS/NASAGeo/Manuscripts/ChgNoChgManuscript/Mexico"
->>>>>>> 8d3cc6e0a6340179644e8b864ef64d48fb66bb01
 # WINDOWS
 path=#("X:/VictorShare/aRnFiles/Pucallpa")
   ("X:/VictorShare/s3dFiles/Orinoquia/OutputsTestData")
@@ -47,9 +41,11 @@ for (i in 3:4){ # MAKE SURE THE selected elements correspond to the sat.nm in EE
 stacks=list()
 normbands=seq(1,6)
 stacknames<- list.files('.', pattern='mskd_.grd')
-#usedstacknames=stacknames[c(1,2,3,13)]
-for (i in 1:length(stacknames)){
-  stacks[[i]]=raster::stack(stacknames[[i]], bands=normbands)
+usedstacknames=stacknames[c(1,2,3,13)]
+#for (i in 1:length(stacknames)){
+for (i in length(usedstacks)){
+#for (i in 1:13){
+  stacks[[i]]=raster::stack(stacknames[usedstacks[i]], bands=normbands)
   #names(stacks[[i]])=layernames[normbands]
   #writeRaster(stacks[[i]], filename=paste(names(stacks)[i], "mskd_", sep="_"), 
   #            format="raster",  datatype="INT2S")
@@ -57,15 +53,6 @@ for (i in 1:length(stacknames)){
 names(stacks)= substr(stacknames, 1, nchar(stacknames)-10)
 #plotRGB(stacks[[1]], r=4, g=3, b=2, stretch="lin")
 
-<<<<<<< HEAD
-=======
-ref=c(1,2) 
-tar=c(3,4)
-pvalpif=1e-2 # Orinoquia, Mexico
-#pvalpif=1e-3 # Pucallpa
-#refvec=seq(reftar[1], reftar[length(reftar)-1], 2)
-
->>>>>>> 8d3cc6e0a6340179644e8b864ef64d48fb66bb01
 for(i in 1:length(ref)){
   instacks=list(stacks[[tar[[i]]]], stacks[[ref[[i]]]])
   names(instacks)=c(stacknames[[tar[[i]]]], stacknames[[ref[[i]]]])
@@ -80,21 +67,21 @@ for(i in 1:length(ref)){
 ##### DEBUGGING TESTS
 ## For test data
 load("testdata.RData")
+s3dmod=s3d(strips, thres=0.01, pval.pif=0.005,  pval.chg=0.99, cca=TRUE, 
+           prefix="test", distype="chisq")
 
 ###### Arguments from s3d
 ### Adjusted
 cca=FALSE
 pval.pif = 1e-02 
 distype="chisq"
-
+thres=0.01
 ### Default
 strips=strips
 distsamp=0.01
 pval.chg=0.99
 minPIF=5
-thres.shape=.003
-thres.rate=.003
-maxiter=30 
+maxiter=20 
 prefix="test"
 norm.ext=NULL
 fitline=TRUE

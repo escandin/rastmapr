@@ -180,7 +180,7 @@ calibrationParameters2<-function (ref, tar, threshMask){#,
   return(out)
 }
 s3d <- function(strips, cca=FALSE, distype="gamma", distsamp=0.01, pval.pif = 1e-02, pval.chg=0.99,
-                minPIF=5, thres.shape=.005, thres.rate=.005, maxiter=30, prefix="", 
+                minPIF=5, thres=1e-2, maxiter=20, prefix="", 
                 norm.ext=NULL,fitline=TRUE, writemasks=TRUE){ #degfree = nlayers(strips[[2L]]),
   # s3d: Iterated Sum of the Squared Standaradized Differences iterates the selection of
   # PIFs defined by a pval.tif threshold by excluding in each iteration the pixels 
@@ -326,8 +326,7 @@ s3d <- function(strips, cca=FALSE, distype="gamma", distsamp=0.01, pval.pif = 1e
       lmparamtot=rbind(lmparamtot, lmparam)
     }
     if(distype=="chisq"){
-      distparam=data.frame(cbind(noch[[2]][[3]][[1]], noch[[2]][[3]][[2]]))
-      distparam$iter <- i
+      distparam=data.frame(i, cbind(noch[[2]][[3]][[1]], noch[[2]][[3]][[2]]))
       names(distparam)=c('iter', 'ksD', "pval")
     } else {
       diststat=gofstat(noch[[2]])
@@ -339,21 +338,27 @@ s3d <- function(strips, cca=FALSE, distype="gamma", distsamp=0.01, pval.pif = 1e
     distparamtot=rbind(distparamtot, distparam)
     print(paste(i, "iterations processed", sep=" "))
     
-    if (distype=="chisqs"){
-    chg.intp=abs(lmparamtot$intercept[which(lmparamtot$iter==i)]-
-                   lmparamtot$intercept[which(lmparamtot$iter==(i-1))])
-    chg.slope=abs(lmparamtot$slope[which(lmparamtot$iter==i)]-
-                    lmparamtot$slope[which(lmparamtot$iter==(i-1))])
-    if (max(chg.intp)<thres.intp & max(chg.slope)<thres.slope) {
+    # if (distype=="chisqs"){
+    # chg.intp=abs(lmparamtot$intercept[which(lmparamtot$iter==i)]-
+    #                lmparamtot$intercept[which(lmparamtot$iter==(i-1))])
+    # chg.slope=abs(lmparamtot$slope[which(lmparamtot$iter==i)]-
+    #                 lmparamtot$slope[which(lmparamtot$iter==(i-1))])
+    # if (max(chg.intp)<thres.intp & max(chg.slope)<thres.slope) {
+    #   break}
+    # }
+    # else {
+    #   chg.shape=abs(distparamtot$shape[which(distparamtot$iter==i)]-
+    #                 distparamtot$shape[which(distparamtot$iter==i-1)])
+    #   chg.rate=abs(distparamtot$rate[which(distparamtot$iter==i)]-
+    #                 distparamtot$rate[which(distparamtot$iter==i-1)])
+    # if (max(chg.shape)<thres.shape & max(chg.rate)<thres.rate) 
+    
+    # Setup threshold for convergence to stop the iterations
+    ksDstd=(max(distparamtot$ksD)-distparamtot$ksD)/max(distparamtot$ksD)
+    delta=ksDstd[2:length(ksDstd)]-ksDstd[1:length(ksDstd)-1]
+    if (delta[length(delta)]<thres){
       break
-    else {
-      chg.shape=abs(distparamtot$shape[which(distparamtot$iter==i)]-
-                    distparamtot$shape[which(distparamtot$iter==i-1)])
-      chg.rate=abs(distparamtot$rate[which(distparamtot$iter==i)]-
-                    distparamtot$rate[which(distparamtot$iter==i-1)])
-    if (max(chg.shape)<thres.shape & max(chg.rate)<thres.rate) {
-      break
-    }}
+    }
     if (i==maxiter){
       break
     }
@@ -376,16 +381,20 @@ s3d <- function(strips, cca=FALSE, distype="gamma", distsamp=0.01, pval.pif = 1e
     abline(unlist(calp$parameters[[b]][1])[1], unlist(calp$parameters[[b]][1])[2])
   }
   if (distype=="chisq"){
-    
+    par(mfrow=c(1,1))
+    plot(distparamtot$ksD~distparamtot$iter, xlab="iter", ylab="ksD")
   } else {
     par(mfrow=c(2,2))
     plot(distparamtot$ksD~distparamtot$iter, xlab="iter", ylab="ksD")
     plot(distparamtot$shape~distparamtot$iter, xlab="iter", ylab="shape")
     plot(distparamtot$rate~distparamtot$iter, xlab="iter", ylab="rate")
     plot(distparamtot$rate~distparamtot$shape, xlab="shape", ylab="rate")
-    paramstats=list(lmparamtot, distparamtot)
-    names(paramstats)=c('lmparam', "distparam")
   } #else {paramstats=lmparamtot}
+  if(fitline==TRUE){
+    paramstats=list(lmparamtot, distparamtot)
+    names(paramstats)=c('lmparam', "distparam")} else{
+      paramstats=distparamtot}
+  
   out=list(thrs[[1]], noch, calp[[1]], calp[[2]], paramstats)
   names(out)=c("sumstandardizediff", "noch", "data", "parameters", "paramstats")
   return(out)
