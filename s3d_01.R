@@ -272,7 +272,7 @@ s3d <- function(strips, cca=FALSE, distype="gamma", distsamp=0.01, pval.pif = 1e
   }
   distparamtot=distparam
  
-  print('iterating PIF extraction until the change in the distribution parameters are below thres.shape and thres.rate values')
+  print('iterating PIF extraction until the change in the distribution parameters are below thres values')
   repeat{
     i <- i+1
     if (distype=="chisq"){
