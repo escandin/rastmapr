@@ -315,14 +315,16 @@ smg=function(inlist=listr, cca="FALSE", method="none", refitem=NA, mosaicitems=c
   maskitems<-unique(c(refitem, mosaicitems))
   maskitems<-maskitems[!is.na(maskitems)]
  
-  # perform cloud masking
-  if(!is.na(QAbandname)){
-    # select items to mask from the list
-    #bnames=names(inlist[[refitem]])
-    #cloudmasking:
-    print('masking clouds')
-    for(i in maskitems){
-      layernames=names(inlist[[i]])
+  
+  # select items to mask from the list
+  #bnames=names(inlist[[refitem]])
+  
+  #Mask clouds and subset stacks to include only normbands:
+  for(i in maskitems){
+    layernames=names(inlist[[i]])
+    # perform cloud masking
+    if(!is.na(QAbandname)){
+      print('masking clouds')
       msk=RStoolbox::classifyQA(inlist[[i]][[QAbandname]], sensor=sensor) #do Sys.time to know whether it's faster with get/setValues
       if(is.numeric(cloudbuff)){
          msk=buffer(msk, width=cloudbuff)}
@@ -331,13 +333,15 @@ smg=function(inlist=listr, cca="FALSE", method="none", refitem=NA, mosaicitems=c
       if(savelcloudmsk==TRUE){
       writeRaster(msk, filename=paste(paste("CloudMsk", stacknames[i], sep="_"), "tif", sep="."))
       }
-      inlist[[i]]=inlist[[i]][[normbands]] # only select bands to normalize
-      inlist[[i]]=raster::mask(inlist[[i]], msk) ## this is more than a minute faster than using the raster::mask function
-      names(inlist[[i]])=layernames[normbands]
-       #names(inlist[[i]])=bnames[normbands]
-      print(paste(paste("item", i, sep=" "), "masked", sep=" "))
     }
-    rm(msk)
+    inlist[[i]]=inlist[[i]][[normbands]] # only select bands to normalize
+    names(inlist[[i]])=layernames[normbands]
+    if(!is.na(QAbandname)){
+      inlist[[i]]=raster::mask(inlist[[i]], msk)
+      rm(msk)
+    }
+    #names(inlist[[i]])=bnames[normbands]
+    print(paste(paste("item", i, sep=" "), "masked", sep=" "))
   }
   
   # perform topographic correction
