@@ -262,13 +262,13 @@ s3d <- function(strips, cca=FALSE, distype="gamma", distsamp=0.01, pval.pif = 1e
     distparam=data.frame(cbind(i, noch[[2]][[3]][[1]], noch[[2]][[3]][[2]]))
     names(distparam)=c('iter', 'ksD', "pval")
     } else {
-    diststat=gofstat(noch[[2]])
-    distparam$ksD=diststat$ks
-    distparam$iter <- i
-    distparam=data.frame(matrix(nrow=1,ncol=4))
-    names(distparam)=c("iter", "ksD", "shape", "rate")
-    distparam$shape=noch[[2]]$estimate[1]
-    distparam$rate=noch[[2]]$estimate[2]
+      distparam=data.frame(matrix(nrow=1,ncol=4))
+      names(distparam)=c("iter", "ksD", "shape", "rate")
+      diststat=gofstat(noch[[2]])
+      distparam$iter <- i
+      distparam$ksD=diststat$ks
+      distparam$shape=noch[[2]]$estimate[1]
+      distparam$rate=noch[[2]]$estimate[2]
   }
   distparamtot=distparam
  
