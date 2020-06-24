@@ -331,7 +331,7 @@ s3d <- function(strips, cca=FALSE, distype="gamma", distsamp=0.01, pval.pif = 1e
     } else {
       diststat=gofstat(noch[[2]])
       distparam$iter <- i
-      distparam$ksD=gammastat$ks
+      distparam$ksD=diststat$ks
       distparam$shape=noch[[2]]$estimate[1]
       distparam$rate=noch[[2]]$estimate[2]
     }
