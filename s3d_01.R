@@ -106,8 +106,8 @@ nochg2<-function (thresraster, pvalue = 1e-02, distype="gamma",
       require(fitdistrplus)
     #if(cca==TRUE) {thresraster=thresraster[[1]]}
       fit.stats <- fitdistrplus::fitdist(samp, dist =distype)
-      threshold= qgamma(pvalue, shape=fit.gamma$estimate[1],
-                        rate=fit.gamma$estimate[2])
+      threshold= qgamma(pvalue, shape=fit.stats$estimate[1],
+                        rate=fit.stats$estimate[2])
   }
   if(threshold < minValue(thresraster)){
     warning("the pvalue selected produces a threshold that is larger that the minimum 
