@@ -281,7 +281,7 @@ s3d <- function(strips, cca=FALSE, distype="gamma", distsamp=0.01, pval.pif = 1e
     } else { noch <- nochg2(thrs, pvalue= pval.chg, distype=distype, propsamp=distsamp)}
  
     if (writemasks==TRUE){
-      raster::writeRaster(noch[[1]], 
+      raster::writeRaster(noch[[1]], overwrite=TRUE,
                   paste(prefix, paste(paste("removeChgMsk", i-1, sep=""), "tif", sep="."), sep="_"))
     }
       #plot(noch)
