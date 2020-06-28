@@ -10,17 +10,20 @@ path="/Users/tug61163/Documents/PROJECTS/NASAGeo/Manuscripts/ChgNoChgManuscript/
 path="/Users/tug61163/Documents/PROJECTS/NASAGeo/Manuscripts/ChgNoChgManuscript/Mexico"
 
 # WINDOWS
-path=#("X:/VictorShare/aRnFiles/Pucallpa")
-  ("X:/VictorShare/s3dFiles/Orinoquia/OutputsTestData")
-#("X:/VictorShare/aRnFiles/Mexico")#
+path=#("X:/VictorShare/s3dFiles/Pucallpa")
+  ("X:/VictorShare/s3dFiles/Orinoquia")
+("X:/VictorShare/s3dFiles/Mexico")#
 setwd(path)
 dir.create('tempfiledir')
 tempdir=paste(getwd(),'tempfiledir', sep="/")
 rasterOptions(tmpdir=tempdir)
 
 tares <- list.files('.', pattern='tar.gz')
-stacks<- EEstackWithoutMeta(tares, sat.nm="LO08")
+#stacks<- EEstackWithoutMeta(tares, sat.nm="LO08")
 #stacks<- EEstackWithoutMeta(tares, sat.nm="LT05")
+
+stacknames=names(stacks)
+layernames=names(stacks[[1]])
 
 #PRODUCE MASKED STACKS
 # SPECIFY DIFFERENT SETTINGS FOR OLI, TM
@@ -28,8 +31,8 @@ sat="TM"
 normbands=seq(1,6) # for TM
 #sat="OLI" 
 #normbands=seq(2,7) # for OLI
-#cloud masking
 
+#cloud masking
 for (i in 3:4){ # MAKE SURE THE selected elements correspond to the sat.nm in EEstackWithoutMeta
   stacks[[i]]=smg(inlist=stacks, method= "none", mosaicitems=i, 
                   normbands=normbands, sensor=sat)
@@ -49,18 +52,19 @@ for (i in 1:length(stacknames)){
   #writeRaster(stacks[[i]], filename=paste(names(stacks)[i], "mskd_", sep="_"), 
   #            format="raster",  datatype="INT2S")
 }
-names(stacks)= substr(stacknames, 1, nchar(stacknames)-10)
-plotRGB(stacks[[1]], r=4, g=3, b=2, stretch="lin")
+stacknames= substr(stacknames, 1, nchar(stacknames)-16)
+names(stacks)=stacknames
+plotRGB(stacks[[2]], r=4, g=3, b=2, stretch="lin")
 
-ref=c(1,2)
-tar=c(3,4)
+ref=c(2,4)
+tar=c(1,3)
 for(i in 1:length(ref)){
   instacks=list(stacks[[tar[[i]]]], stacks[[ref[[i]]]])
   names(instacks)=c(stacknames[[tar[[i]]]], stacknames[[ref[[i]]]])
-  s3dmod=s3d(strips=instacks, thres=1e-2, distype="chisq",
-             pval.pif=1e-3,  pval.chg=0.99, cca=TRUE, 
+  s3dmod=s3d(strips=instacks, thres=1e-2, distype="gamma",
+             pval.pif=5e-3,  pval.chg=0.99, cca=FALSE, 
              prefix=names(instacks)[1])
-  save(s3dmod, file=paste(paste('s3d_CCA_chsq',names(instacks)[1], sep="_"),  "RData", sep="."))
+  save(s3dmod, file=paste(paste(names(instacks)[1],'s3d_gammaCCA', sep="_"),  "RData", sep="."))
 }
 
 
