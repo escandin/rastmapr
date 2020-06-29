@@ -72,9 +72,6 @@ thresraster2<-function (refstack, tarstack, cca=FALSE, propsamp=1){
   }
   
   sumstandardizediff = calc(standardizediff^2, sum)#, na.rm = TRUE)
-  #if(cca==TRUE){
-  #  sumstandardizediff=list(sumstandardizediff, cct)
-   # names(sumstandardizediff)=c("sumstandardizediff", "CCT")} 
   return(sumstandardizediff)
 }
 nochg2<-function (thresraster, pvalue = 1e-02, distype="gamma",

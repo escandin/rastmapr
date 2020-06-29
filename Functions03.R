@@ -339,9 +339,8 @@ smg=function(inlist=listr, cca="FALSE", method="none", refitem=NA, mosaicitems=c
     if(!is.na(QAbandname)){
       inlist[[i]]=raster::mask(inlist[[i]], msk)
       rm(msk)
+      print(paste(paste("item", i, sep=" "), "masked", sep=" "))
     }
-    #names(inlist[[i]])=bnames[normbands]
-    print(paste(paste("item", i, sep=" "), "masked", sep=" "))
   }
   
   # perform topographic correction
