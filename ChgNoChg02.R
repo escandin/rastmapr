@@ -10,9 +10,10 @@ path="/Users/tug61163/Documents/PROJECTS/NASAGeo/Manuscripts/ChgNoChgManuscript/
 path="/Users/tug61163/Documents/PROJECTS/NASAGeo/Manuscripts/ChgNoChgManuscript/Mexico"
 
 # WINDOWS
-path=("X:/VictorShare/s3dFiles/Pucallpa")
-  ("X:/VictorShare/s3dFiles/Orinoquia")
-("X:/VictorShare/s3dFiles/Mexico")#
+path=#("X:/VictorShare/s3dFiles/Pucallpa")
+  #("X:/VictorShare/s3dFiles/Orinoquia")
+#("X:/VictorShare/s3dFiles/Mexico")#
+
 setwd(path)
 dir.create('tempfiledir')
 tempdir=paste(getwd(),'tempfiledir', sep="/")
