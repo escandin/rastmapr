@@ -1,0 +1,14 @@
+Package: rasterMapR
+Type: Package
+Title: Automated production and validation of thematic raster maps.
+Version: 1.1
+Date: 2020-08-17
+Author: Victor Gutierrez-Velez <victorhugo@temple.edu>, Wilson Lara <wilarhen@temple.edu>, Jeronimo Rodriguez <jeronimo.rodriguez@temple.edu >
+Maintainer: Wilson Lara <wilarhen@temple.edu>
+Description: Pairs of adjacent hyper-spectral layers are used to detect pseudo-invariant features (PIF): i.e., pixels representing common features in the images. The PIF are modeled fitting linear-regression models. Fitted parameters are used to normalize radiometric features of the images, see examples in CalibrateRaster().
+License: GPL-3
+Depends: raster,rgdal,RStoolbox
+Imports: graphics,PTXQC,stats,utils,raster,randomForest,caret
+LazyData: TRUE
+NeedsCompilation: no
+Packaged: 2020-08-20 14:15:22 UTC; wilar
