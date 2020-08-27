@@ -299,7 +299,7 @@ smg=function(inlist=listr, cca="FALSE", method="none", refitem=NA, mosaicitems=c
   # mosaicitems: items to be normalized and mosaiced. If mosaicitems=1, no mosaics are built
   # QAband (inherited): position of the landsat QA band in each rasterstack contained in 
   #         inlist. If QA=NA, no cloud masking is performed
-  # sensor (inherited): Sensor to encode. Options: c("OLI", "TIRS", "ETM+", "TM", "MSS")
+  # sensor (inherited): Sensor to encode for cloud masking. Options: c("OLI", "TIRS", "ETM+", "TM", "MSS")
   # transform: whether to apply a canonical transformation to the data before normalizing
   # required functions and packages
   require(rgdal, raster, RStoobox, aRn)

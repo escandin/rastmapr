@@ -62,7 +62,7 @@ for(i in 1:length(ref)){
   instacks=list(stacks[[tar[[i]]]], stacks[[ref[[i]]]])
   names(instacks)=c(stacknames[[tar[[i]]]], stacknames[[ref[[i]]]])
   s3dmod=s3d(strips=instacks, thres=1e-2, distype="chisq",
-             pval.pif=5e-3,  pval.chg=0.99, cca=TRUE, 
+             pval.pif=1e-3,  pval.chg=0.99, cca=TRUE, 
              prefix=names(instacks)[1])
   save(s3dmod, file=paste(paste(names(instacks)[1],'s3d_chisqCCA', sep="_"),  "RData", sep="."))
 }
