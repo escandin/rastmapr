@@ -56,15 +56,17 @@ stacknames= substr(stacknames, 1, nchar(stacknames)-16)
 names(stacks)=stacknames
 plotRGB(stacks[[2]], r=4, g=3, b=2, stretch="lin")
 
-ref=c(1,2)
-tar=c(3,4)
+ref=c(2,4) #Orinoquia
+#c(1,2)
+tar=c(1,3) #Orinoquia
+#c(3,4)
 for(i in 1:length(ref)){
   instacks=list(stacks[[tar[[i]]]], stacks[[ref[[i]]]])
   names(instacks)=c(stacknames[[tar[[i]]]], stacknames[[ref[[i]]]])
   s3dmod=s3d(strips=instacks, thres=1e-2, distype="chisq",
              pval.pif=1e-3,  pval.chg=0.99, cca=TRUE, 
              prefix=names(instacks)[1])
-  save(s3dmod, file=paste(paste(names(instacks)[1],'s3d_chisqCCA', sep="_"),  "RData", sep="."))
+  save(s3dmod, file=paste(paste(names(instacks)[1],'s3d_chisqCCA2', sep="_"),  "RData", sep="."))
 }
 
 
