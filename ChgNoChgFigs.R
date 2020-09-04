@@ -10,9 +10,9 @@ library(ggplot2)
 path="/Users/tug61163/Documents/PROJECTS/NASAGeo/Manuscripts/ImistManuscript/Orinoquia"
 path="/Users/tug61163/Documents/PROJECTS/NASAGeo/Manuscripts/ImistManuscript/Pucallpa"
 # WINDOWS
-path=#("X:/VictorShare/s3dFiles/Pucallpa/OutputsGamma")
+path=#("X:/VictorShare/s3dFiles/Pucallpa")
 #("X:/VictorShare/s3dFiles/MontesTest")
-#("X:/VictorShare/s3dFiles/Orinoquia")
+("X:/VictorShare/s3dFiles/Orinoquia")
 ("X:/VictorShare/s3dFiles/Mexico")#
 setwd(path)
 dir.create('tempfiledir')
@@ -30,9 +30,9 @@ rasterOptions(tmpdir=tempdir)
 
 # Retrieve infomrmation from R objects
 rdata=list.files('.', pattern='.RData')
-names=c("05057CCAchsq", "05057", "05057CCA", "06057CCAchsq", "06057", "06057CCA")  # ORINOQUIA
-names=c("06066CCAchsq", "07066CCAchsq", "07066CCA", "06066CCA", "06066", "07066") # PUCALLPA
-names=c("026046CCAchsq", "026046gamma", "026046CCAgamma")#,"026047CCA",, "026047") # MEXICO
+names=c("05057CCAchsq", "05057", "05057CCA")#, "06057CCAchsq", "06057", "06057CCA")  # ORINOQUIA
+names=c("06066CCAchsq", "06066", "06066CCA")#, "07066CCAchsq", "07066CCA", "07066") # PUCALLPA
+names=c("026046CCAchsq", "02604", "026046CCA")#,"026047CCA",, "026047") # MEXICO
 
 pdf(file="gammaResults.pdf",width=4,height=4,paper='special')
 for(i in 1:length(rdata)){
