@@ -7,8 +7,10 @@ library(fitdistrplus)
 library(ggplot2)
 
 # MAC
-path="/Users/tug61163/Documents/PROJECTS/NASAGeo/Manuscripts/ImistManuscript/Orinoquia"
-path="/Users/tug61163/Documents/PROJECTS/NASAGeo/Manuscripts/ImistManuscript/Pucallpa"
+path="/Users/tug61163/Documents/PROJECTS/NASAGeo/Manuscripts/ChgNoChgManuscript/Orinoquia"
+path="/Users/tug61163/Documents/PROJECTS/NASAGeo/Manuscripts/ChgNoChgManuscript/Pucallpa"
+path="/Users/tug61163/Documents/PROJECTS/NASAGeo/Manuscripts/ChgNoChgManuscript/Mexico"
+
 # WINDOWS
 path=#("X:/VictorShare/s3dFiles/Pucallpa")
 #("X:/VictorShare/s3dFiles/MontesTest")
@@ -30,16 +32,16 @@ rasterOptions(tmpdir=tempdir)
 
 # Retrieve infomrmation from R objects
 rdata=list.files('.', pattern='.RData')
-names=c("05057CCAchsq", "05057", "05057CCA")#, "06057CCAchsq", "06057", "06057CCA")  # ORINOQUIA
-names=c("06066CCAchsq", "06066", "06066CCA")#, "07066CCAchsq", "07066CCA", "07066") # PUCALLPA
-names=c("026046CCAchsq", "02604", "026046CCA")#,"026047CCA",, "026047") # MEXICO
 
-pdf(file="gammaResults.pdf",width=4,height=4,paper='special')
+#organize as Gamma, Gamma CCA, Chisq CCA
+rdata=rdata[c(2,3,1)] 
+names=c("Gamma", "Gamma CCA", "Chisquare CCA")#, "Chisquare2 CCA")
+
 for(i in 1:length(rdata)){
   load(rdata[i])
   data=s3dmod$paramstats[[2]]
   data=data[,-c(3, 4)]
-  data$location=rep(substr(path, 25, nchar(path)), nrow(data))
+  #data$location=rep(substr(path, 25, nchar(path)), nrow(data))
   data$names=rep(names[i], nrow(data))
   if(i==1){dataset=data} else{dataset=rbind(dataset,data)}
   # 
@@ -72,21 +74,14 @@ for(i in 1:length(rdata)){
  #        lmparamtot$slope[which(lmparamtot$band==b)], xlab="band", ylab="slope")
  # }
 }
- ggplot(dataset, aes(x=dataset$iter, y=dataset$ksD, col=names)) + 
-   geom_line() + ylim(0, 0.3)
+pdf(file="Convergence.pdf",width=4,height=4,paper='special')
+  ggplot(dataset, aes(x=dataset$iter, y=dataset$ksD, col=names)) + 
+   geom_line() + ylim(0, 0.5)
  #ggplot(dataset, aes(x=dataset$iter, y=dataset$rate, col=names)) +
  #  geom_line() + ylim(0, 0.4)
  #ggplot(dataset, aes(x=dataset$iter, y=dataset$shape, col=names)) + 
  #  geom_line() + ylim(0, 2.5)
 dev.off()
-
-
-i=1
-name=paste(paste("_removeChgMsk", 1, sep=""), "tif", sep=".")
-msk=raster(name)
-noch1=mask(stacks[[1]])
-# Plot cummulative distribution before and after masking
-
 
 
 

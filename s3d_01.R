@@ -97,9 +97,9 @@ nochg2<-function (thresraster, pvalue = 1e-02, distype="gamma",
   samp=raster::sampleRandom(thresraster, length(thresraster)*propsamp)
   if(distype=="chisq"){
     threshold = qchisq(pvalue, degfree)
-    simulated=rchisq(length(samp), degfree)
-    ks<-ks.test(samp, simulated)
-    fit.stats=list(samp, simulated, ks)} else {
+    #simulated=rchisq(length(samp), degfree)
+    fit.stats<-ks.test(samp,  pchisq, df=6)} else {
+    #fit.stats=list(samp, simulated, ks)} 
       require(fitdistrplus)
     #if(cca==TRUE) {thresraster=thresraster[[1]]}
       fit.stats <- fitdistrplus::fitdist(samp, dist =distype)
@@ -256,7 +256,7 @@ s3d <- function(strips, cca=FALSE, distype="gamma", distsamp=0.01, pval.pif = 1e
   }
   
   if(distype=="chisq"){
-    distparam=data.frame(cbind(i, noch[[2]][[3]][[1]], noch[[2]][[3]][[2]]))
+    distparam=data.frame(cbind(i, noch[[2]][[1]], noch[[2]][[2]]))
     names(distparam)=c('iter', 'ksD', "pval")
     } else {
       distparam=data.frame(matrix(nrow=1,ncol=4))
@@ -323,7 +323,7 @@ s3d <- function(strips, cca=FALSE, distype="gamma", distsamp=0.01, pval.pif = 1e
       lmparamtot=rbind(lmparamtot, lmparam)
     }
     if(distype=="chisq"){
-      distparam=data.frame(i, cbind(noch[[2]][[3]][[1]], noch[[2]][[3]][[2]]))
+      distparam=data.frame(i, cbind(noch[[2]][[1]], noch[[2]][[2]]))
       names(distparam)=c('iter', 'ksD', "pval")
     } else {
       diststat=gofstat(noch[[2]])

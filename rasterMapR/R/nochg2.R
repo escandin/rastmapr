@@ -39,8 +39,8 @@ nochg2 <- structure(function #Change and no change mask
       if(distype=="chisq"){
     threshold = qchisq(pvalue, degfree)
     simulated=rchisq(length(samp), degfree)
-    ks<-ks.test(samp, simulated)
-    fit.stats=list(samp, simulated, ks)} else {
+    fit.stats<-ks.test(samp,  pchisq, df=6)} else {
+    #fit.stats=list(samp, simulated, ks)} else {
                                            ## require(fitdistrplus)
     #if(cca==TRUE) {thresraster=thresraster[[1]]}
       fit.stats <- fitdistrplus::fitdist(samp, dist =distype)

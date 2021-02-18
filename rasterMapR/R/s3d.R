@@ -105,7 +105,7 @@ s3d <- structure(function #Iterated Sum of the Squared Standaradized
   }
   
   if(distype=="chisq"){
-    distparam=data.frame(cbind(i, noch[[2]][[3]][[1]], noch[[2]][[3]][[2]]))
+    distparam=data.frame(cbind(i, noch[[2]][[1]], noch[[2]][[2]]))
     names(distparam)=c('iter', 'ksD', "pval")
     } else {
       distparam=data.frame(matrix(nrow=1,ncol=4))
@@ -172,7 +172,7 @@ s3d <- structure(function #Iterated Sum of the Squared Standaradized
       lmparamtot=rbind(lmparamtot, lmparam)
     }
     if(distype=="chisq"){
-      distparam=data.frame(i, cbind(noch[[2]][[3]][[1]], noch[[2]][[3]][[2]]))
+      distparam=data.frame(i, cbind(noch[[2]][[1]], noch[[2]][[2]]))
       names(distparam)=c('iter', 'ksD', "pval")
     } else {
       diststat=gofstat(noch[[2]])
