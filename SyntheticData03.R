@@ -20,14 +20,14 @@ for (k in 1:20){
   for (i in 1:100){
     for(j in 1:(nbands/2)){ # It will produce pairs of correlated bands
       #rval=runif(1, min=rmin[selgroup[j]], max=rmax[selgroup[j]])
-      rval=0#(k-1)/20
+      rval=(k-1)/20
       out <- mvrnorm(100, mu = c(0,0), Sigma = matrix(c(1,rval,rval,1), ncol = 2),
                      empirical = TRUE)
       if(j==1){syntdata=out} else {syntdata=cbind(syntdata, out)}
     }
     
     s3d=apply(syntdata^2,1, sum) 
-    chisqdata=rchisq(length(s3d), 6)
+    #chisqdata=rchisq(length(s3d), 6)
     #kschisq<-ks.test(s3d, chisqdata)
     kschisq1<-ks.test(s3d, pchisq, df=6)
     
@@ -48,9 +48,9 @@ for (k in 1:20){
 }  
 # I have to add this a-posteriori because otherwise it converts all columnns to character
 totstats$dist=as.factor(rep(c("chisq","gamma"), nrow(totstats)/2))
-save(totstats, file="syntdataGGplot.RData") 
+save(totstats, file="syntdataGGplot01.RData") 
 
-pdfFilename="syntGammaVsXhisq.pdf"
+pdfFilename="syntGammaVsXhisq01.pdf"
 pdf(pdfFilename, width=4,height=4,paper='special')
 # Based on http://www.cookbook-r.com/Graphs/Plotting_means_and_error_bars_(ggplot2)/
 ggplot(totstats, aes(x=rval, y=meanval, colour=dist)) + 
