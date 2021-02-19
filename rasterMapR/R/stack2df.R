@@ -16,7 +16,7 @@ stack2df <- structure(function #Extracts into data frame
   # of the attributes associated to those areas
   # value: a data frame with columns representing the pixel values in each band for
   # the areas labeled as defined by classcolname
-  if (is.null(intersect(extent(invec), extent(inrast)))){
+  if (is.null(raster::intersect(extent(invec), extent(inrast)))){
     stop("the extents of inrast and invec do not overlap")
   }
   if(as.character(crs(inrast))!= as.character(crs(invec))){
@@ -32,7 +32,7 @@ stack2df <- structure(function #Extracts into data frame
   # assign class ID to each class
   invec$class_ID=rep(NA, nrow(invec@data))
   for (i in 1:length(invec[[classcolname]])){
-    invec$class_ID[which(invec[[classcolname]]==levels(invec[[classcolname]])[i])]=i
+    invec$class_ID[which(invec[[classcolname]]==unique(invec[[classcolname]])[i])]=i
   }
   
   # mask the input raster including  pixels with valid values in all bands only
@@ -49,8 +49,8 @@ stack2df <- structure(function #Extracts into data frame
   
   # add a column with a class name
   dbclassname=rep(NA, length(class_ID))
-  for (i in 1:length(levels(invec[[classcolname]]))){
-    dbclassname[which(class_ID==i, arr.ind=TRUE)] = levels(invec[[classcolname]])[i]
+  for (i in 1:length(unique(invec[[classcolname]]))){
+    dbclassname[which(class_ID==i, arr.ind=TRUE)] = unique(invec[[classcolname]])[i]
   }
   commonclasses= match(sort(unique(dbclassname)), sort(levels(invec[[classcolname]])))
   if(length(commonclasses)< length(levels(invec[[classcolname]]))){

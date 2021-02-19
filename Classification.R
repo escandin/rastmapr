@@ -22,13 +22,14 @@ library(caret)
 library(maptools)
 library(stringr)
 library(ggplot2)
+library(rgeos)
 
-path=#("X:/VictorShare/aRnFiles/Pucallpa")
-("X:/VictorShare/aRnFiles/Orinoquia")
-#("X:/VictorShare/aRnFiles/Mexico")#
+# MAC
+path="/Users/tug61163/Documents/PROJECTS/NASAGeo/Manuscripts/ChgNoChgManuscript/Orinoquia"
+path="/Users/tug61163/Documents/PROJECTS/NASAGeo/Manuscripts/ChgNoChgManuscript/Pucallpa"
+path="/Users/tug61163/Documents/PROJECTS/NASAGeo/Manuscripts/ChgNoChgManuscript/Mexico"
 
-savepath=(paste(path, "outputsBandsAll", sep="/"))
-savepath1=(paste(path, "outputsBands3_7", sep="/"))
+
 setwd(path)
 dir.create('tempfiledir')
 tempdir=paste(getwd(),'tempfiledir', sep="/")
@@ -37,159 +38,53 @@ rasterOptions(tmpdir=tempdir)
 ##### 1. DATA INPUTS
 tares <- list.files('.', pattern='tar.gz')
 
-calibdata=readOGR(".","calibdata_2016_NEW_2.0")# Orinoquia
-readOGR(".", "Training_DF_2018_5.0")               # Mexico
-readOGR(".", "Training_Pucallpa_2015_5.0")    #Pucallpa
+calibdata=#readOGR(".","calibdata_2016_NEW_2.0")# Orinoquia
+readOGR(".", "Training_DF_2018_6.0")               # Mexico
+#readOGR(".", "Training_Pucallpa_2015_5.0")    #Pucallpa
 
-validdata= readOGR(".", "Valdata_2013_NEW_2.0")  #Orinoquia
-readOGR(".", "Training_DF_2010_5.0") # for Mexico    # Mexico
-readOGR(".", "Training_Pucallpa_2011_5.0_")           #Pucallpa
+validdata= #readOGR(".", "Valdata_2013_NEW_2.0")  #Orinoquia
+readOGR(".", "Training_DF_2010_6.0") # for Mexico    # Mexico
+#readOGR(".", "Training_Pucallpa_2011_5.0_")           #Pucallpa
 
-# Check if levels are the same
+# Check if levels are the same. 
 levels(validdata$CLASS_NAME)==levels(calibdata$CLASS_NAME)
 
 # FOR ORINOQUIA
   levels(validdata$CLASS_NAME)=levels(calibdata$CLASS_NAME)
 
-# FOR MEXICO # correct mislabeling of sand class
-  #calibdata@polygons=calibdata@polygons[which(calibdata@data$class!="sand")]
-  calibdata@data$class[which(calibdata@data$class=="Baresoil")]="baresoil"
-  calibdata@data$class=droplevels(calibdata@data$class, "Baresoil")
-  
-  calibdata@data$class[which(calibdata@data$class=="Burn Scar (new)")]="Burn Scar (New)"
-  calibdata@data$class=droplevels(calibdata@data$class, "Burn Scar (new)")
+# FOR MEXICO # check labeling
+  sort(unique(calibdata@data$class)) == sort(unique(validdata@data$class))
   
   calibdata@polygons=calibdata@polygons[which(calibdata@data$class!="Airport_1")]
   calibdata@data=calibdata@data[which(calibdata@data$class!="Airport_1"),]
-  calibdata@data$class=droplevels(calibdata@data$class, "Airport_1")
+  #calibdata@data$class=droplevels(calibdata@data$class, "Airport_1")
   
   calibdata@polygons=calibdata@polygons[which(calibdata@data$class!="Airport_2")]
   calibdata@data=calibdata@data[which(calibdata@data$class!="Airport_2"),]
-  calibdata@data$class=droplevels(calibdata@data$class, "Airport_2")
-
-  #validdata@polygons=validdata@polygons[which(validdata@data$class!="snow")]
-  #validdata@data=validdata@data[which(validdata@data$class!="snow"),]
-  #validdata@data$class=droplevels(validdata@data$class, "snow")
-  levels(validdata$class)==levels(calibdata$class)
-  
-#stack with ALOS PALSAR
-HHref=raster( "palsar_HH_2018_CDMX_Spk.tif" )
-#("palsar_HH_2015_Peru_Spk.tif")
-HVref=raster("palsar_HV_2018_CDMX_Spk.tif")
-#("palsar_HV_2015_Peru_Spk.tif")
-HHtar=raster("palsar_HH_2010_CDMX_Spk.tif")
-#("palsar_HH_2010_Peru_Spk.tif")
-HVtar=raster("palsar_HV_2010_CDMX_Spk.tif")
-#("palsar_HV_2010_Peru_Spk.tif")
-
-##### 2 create original stacks ###########################################
-
-HHHVref=stack(HHref, HVref)
-HHHVtar=stack(HHtar, HVtar)
-bnames=c("HH", "HV")
-names(HHHVref)=bnames
-names(HHHVtar)=bnames
-
-writeRaster(HHHVref, "HHHVref.tif")
-writeRaster(HHHVtar, "HHHVtar.tif")
-rm(HHref, HHtar, HVref, HVtar, HHHVref, HHHVtar)#, HHHVref,HHHVtar)
-
-##### 3-6 Cloud filtering, normalizing, mosaicking ####
-# create mosaics for landsat
-
-# FOR OLI
-stacks<- EEstackWithoutMeta(tares, sat.nm="LO08")
-normethods=c("imist", "ed", "none")
-# This is to use only the data that is common between all layers for normalization
-#e=commonExtent(c(list(calibdata, validdata),stacks))
-for (i in 1:length(normethods)){
-  start=Sys.time()
-  mosaick<- smg(inlist=stacks, method= normethods[i], refitem=2, mosaicitems=c(1,3),
-                pval.pif = 1e-02, pval.chg=0.99, QAbandname="pixel_qa", indem=NA,#demfile,  # DEM file only for Mexico
-                normbands=seq(3, 7), verbose=TRUE, sensor="OLI", norm.ext=NULL, cloudbuff=NA)
-  print(Sys.time()-start)  # Processing time: 1.39 hrs aRn, 24.88 min cor, 10.4 min none
-  writeRaster(mosaick, filename=paste(paste("mosaicTAR", normethods[i], sep=""), "tif", sep="."))
-}
-# FOR TM
-stacks<- EEstackWithoutMeta(tares, sat.nm="LT05")
-substacks=list(stacks[[1]][[3:nlayers(stacks[[1]])]], stacks[[2]][[3:nlayers(stacks[[2]])]],
-               stacks[[3]][[2:nlayers(stacks[[3]])]], stacks[[4]][[2:nlayers(stacks[[4]])]])
-names(substacks)=names(stacks)
-for (i in 1: length(normethods)){
-  # remove band 1 from OLI stacks. THIS IS A WORKAROUND THAT NEEDS TO BE FIXED IN THE FUNCTION
-  start=Sys.time()
-  mosaick<- smg(inlist=substacks, method= normethods[i], refitem=1, mosaicitems=c(3,4), 
-                pval.pif = 1e-02, pval.chg=0.99, QAbandname="pixel_qa", indem= NA, # demfile # only for mexico, 
-                  normbands=seq(1, 5), verbose=TRUE, sensor="TM")
-  print(Sys.time()-start)  # Processing time: 1.39 h imist, 1.39 hrs aRn, 24.88 min cor, 10.4 min none
-  writeRaster(mosaick, filename=paste(paste("mosaicTAR", normethods[i], sep=""), "tif", sep="."))
-}
-rm(mosaick, stacks)
-plotRGB(stack("mosaicTARnone.tif"), r=3,g=2,b=1, stretch="lin")
-
-# For radar (optional)
-for (i in 1:1){
-  start=Sys.time()
-  mosaick<- smg(inlist=HHHVstacks, method= normethods[i], refitem=2, mosaicitems=1, 
-               normbands=seq(1, 2), pval.pif=0.05, verbose=TRUE)
-  print(Sys.time()-start)  # Processing time: 1.39 hrs aRn, 24.88 min cor, 10.4 min none
-  writeRaster(mosaick, filename=paste(paste("mosaicHHHVTAR", normethods[i], sep=""), "tif", sep="."))
-}
-rm(mosaick)
-
-# FOR MEXICO: Both landsat scenes are from the same date in both REF and TAR years
-# Therefore I will mosaic them first with no normalization
-  demfile=raster("SRTM_CDMXint.tif") # For Mexico only
-  stacks<- EEstackWithoutMeta(tares, sat.nm="LT05")
-  #stacks=list(stack('mosaicREFnone.tif'), stack('mosaicTARnone.tif') )
-  mosaick<- smg(inlist=stacks, method="none", refitem=1, mosaicitems=2, 
-                QAbandname="pixel_qa", indem=NA,#demfile, 
-                normbands=seq(1, 5), # (1,7), #
-                verbose=TRUE, sensor="TM")
-  writeRaster(mosaick, filename=paste(paste("mosaicTAR", "none", sep=""), "tif", sep="."), datatype="INT2S")
-  
-  # Then I will normalize the TAR mosaic based on REF mosaic
-for (i in 1:2){
-  start=Sys.time()
-  mosaick<- smg(inlist=instacks, method= normethods[i], refitem=1, mosaicitems=2, 
-                QAbandname=NA, indem=NA, normbands=seq(1, 6), verbose=TRUE, sensor="TM")
-  print(Sys.time()-start)  # Processing time: 1.39 hrs aRn, 24.88 min cor, 10.4 min none
-  writeRaster(mosaick, filename=paste(paste("mosaicTAR", normethods[i], sep=""), "tif", sep="."))
-}
-
-# crop all the layers to the same extent
-mosaiclist=list(stack("mosaicREFnone.tif"), stack("mosaicTARaRn.tif"), 
-                stack("HHHVref.tif"), stack("HHHVtar.tif"))
-e=commonExtent(mosaiclist)
-rm (mosaiclist)
-
-MosaicREFnoneAllbands=stack(crop(stack("mosaicREFnone.tif"), e), crop(stack("HHHVref.tif"), e))
-MosaicREFedAllbands  =stack(crop(stack("mosaicREFed.tif"), e),   crop(stack("HHHVref.tif"), e))
-MosaicREFaRnAllbands =stack(crop(stack("mosaicREFaRn.tif"), e),  crop(stack("HHHVref.tif") ,e))
-MosaicTARnoneAllbands=stack(crop(stack("mosaicTARnone.tif"), e), crop(stack("HHHVtar.tif"), e))
-MosaicTARedAllbands  =stack(crop(stack("mosaicTARed.tif"), e),   crop(stack("HHHVtar.tif"), e))
-MosaicTARaRnAllbands =stack(crop(stack("mosaicTARaRn.tif"), e),  crop(stack("HHHVtar.tif"), e))
-writeRaster(MosaicREFnoneAllbands, "MosaicREFnoneAllbands.tif")
-writeRaster(MosaicREFedAllbands, "MosaicREFedAllbands.tif")
-writeRaster(MosaicREFaRnAllbands, "MosaicREFaRnAllbands.tif")
-writeRaster(MosaicTARnoneAllbands, "MosaicTARnoneAllbands.tif")
-writeRaster(MosaicTARedAllbands, "MosaicTARedAllbands.tif")
-writeRaster(MosaicTARaRnAllbands, "MosaicTARaRnAllbands.tif")
-plotRGB(stack("MosaicTARaRnAllbands.tif"), r=8,g=7,b=6, stretch="lin")
-rm(MosaicREFnoneAllbands, MosaicREFedAllbands, MosaicREFaRnAllbands, MosaicTARnoneAllbands,
-   MosaicTARedAllbands, MosaicTARaRnAllbands)
-
-
+ # calibdata@data$class=droplevels(calibdata@data$class, "Airport_2")
 ########################################################
 ####### Classification and validation
 
 #### For Reference year
-#mosaicREF=stack("MosaicREFaRnAllbands.tif")
-selbands=c(1:5)#(3:7) # this was the best band combination for OLI
-classcolname= "CLASS_NAME" 
-#"class"#
-normethods=c("imist", "ed", "none")
-calibvalid=crossvalidsp(dataset=calibdata, classcolname=classcolname, validprop=0.3)
+mosaicREF=stack("LC08_L1TP_026046_20180110_20180119_01_T1_mskd_.grd")
+#plotRGB(mosaicREF, r=5, g=4, b=3, stretch='lin')
+
+#Select only polygons within the area of influence of the image: 
+extent(calibdata)
+extent(mosaicREF)
+e=commonExtent(inlist=list(calibdata, mosaicREF))
+p <- as(e, 'SpatialPolygons') 
+crs(p)=crs(calibdata)
+selitems=gIntersects(calibdata,p, byid=TRUE)
+calibcrop <- calibdata[as.vector(selitems),]
+length(calibcrop$ID)
+length(calibdata$ID)
+
+#selbands=c(1:5)#(3:7) # this was the best band combination for OLI
+classcolname= #"CLASS_NAME" 
+"class"# Mexico
+normethods="s3d"#c("imist", "ed", "none")
+calibvalid=crossvalidsp(dataset=calibcrop, classcolname=classcolname, validprop=0.3)
 
 for (i in 1:length(normethods)){
   start=Sys.time()

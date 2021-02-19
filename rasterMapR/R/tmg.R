@@ -18,6 +18,7 @@ tmg <- structure(function #Thematic map generator
     outfile="outfilename", ##<<\code{character}.
     plot=TRUE, ##<<\code{logical}.
     tmproduce=TRUE ##<<\code{numeric}.
+    dt="INT1U", ##<<\code{character}
 ){
   # tmg (thematic map generator) produces a thematic map based on either training data or
   # previously calibrated randomForest object. 
@@ -46,6 +47,7 @@ tmg <- structure(function #Thematic map generator
     #calibdf=calibObject
     # for some reason satack2df is not assigning the names of inrast to the respective columns in calidbdf
     names(calibdf)[3:ncol(calibdf)]<- names(inrast) 
+    calibdf[[2]]=as.factor(calibdf[[2]])
     
     # produce a formula with the band names to be entered in the RF classification equal
     # to the input band names
@@ -74,11 +76,11 @@ tmg <- structure(function #Thematic map generator
   }
   
   if((substr(class(validObject)[1],1,7)=="Spatial")==TRUE){
-    if(length(levels(validObject[[classcolname]]))!=length(rownames(class.RF$confusion))){
+    if(length(unique(validObject[[classcolname]]))!=length(rownames(class.RF$confusion))){
       stop('The number of classes in validObject should be the same as the number of classes in calibObject')
     }
     print("extracting pixel values for validation areas")
-    if(is.na((mean(match(rownames(class.RF$confusion),levels(validObject[[classcolname]])))))==TRUE){
+    if(is.na((mean(match(rownames(class.RF$confusion),unique(validObject[[classcolname]])))))==TRUE){
       stop("The names of classes in the calibration object do not match the ones in the validation object")
     }
     
@@ -92,7 +94,6 @@ tmg <- structure(function #Thematic map generator
     print("calculating accuracy metrics")
     conmatrix<- caret::confusionMatrix(as.factor(results),as.factor(validdf$class_name))
     if(savefiles==TRUE){save(conmatrix, file=paste(outfile, "accumatrix.RData", sep="_"))}
-  
   }
   
   if (tmproduce==TRUE){
@@ -101,7 +102,7 @@ tmg <- structure(function #Thematic map generator
                         fun=predict, ext=NULL, const=NULL, na.rm=TRUE)
     if(savefiles==TRUE){
       print("saving classified map to disc")
-      writeRaster(tm, filename=paste(outfile, "tif", sep="."))
+      writeRaster(tm, filename=paste(outfile, "tif", sep="."), datatype=dt)
       }
   }
   ### return(tm) # not sure what object to return since it depends on the inputs

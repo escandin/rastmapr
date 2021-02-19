@@ -155,77 +155,6 @@ AccuStats=function(prefix="class2013_AP_raw_iter", suffix="accumatrix.RData", it
   
   return(list(allusers, allproducers, alloverall, finalstats))
 }
-stack2df=function(inrast=rastack,invec=polygons, classcolname="class"){
-  # extracts into a data frame the pixel values for all bands from different classes
-  # defined in a spatial dataframe
-  # inrast: the raster dataset containing pixel values to extract in [[1]]
-  # invec: spatial dataframe object defining the locations where the data
-  # should be extracted from 
-  # classcolname: the column in the spatial dataframe containing the names 
-  # of the attributes associated to those areas
-  # value: a data frame with columns representing the pixel values in each band for
-  # the areas labeled as defined by classcolname
-  if (is.null(intersect(extent(invec), extent(inrast)))){
-    stop("the extents of inrast and invec do not overlap")
-  }
-  if(as.character(crs(inrast))!= as.character(crs(invec))){
-    stop("inrast and invec should have the same projection")
-  }
-  # required function
-  extractval=function(inraster=inrast, msk=msk){
-    outvector=raster::mask(inraster, msk) 
-    outvector=na.omit(raster::getValues(outvector))
-    return(outvector)
-  }
-  
-  # assign class ID to each class
-  invec$class_ID=rep(NA, nrow(invec@data))
-  for (i in 1:length(invec[[classcolname]])){
-    invec$class_ID[which(invec[[classcolname]]==levels(invec[[classcolname]])[i])]=i
-  }
-  
-  # mask the input raster including  pixels with valid values in all bands only
-  inrast=stackmask(inrast)
-  
-  # create a raster of class_ids. TRY gdalUtils::gdal_rasterize. It might be faster!!!
-  calibrast=raster::rasterize(invec, inrast[[2]], field=invec$class_ID)
-  calibmsk<-maskfun(calibrast, 0, 1, NA)
-  calibmsk=raster::mask(calibmsk, inrast[[2]])
-  
-  # Extract pixel values into a dataframe
-  class_ID=(extractval(calibrast, calibmsk))
-  dataset=data.frame(matrix(data=NA, nrow=length(class_ID), ncol=nlayers(inrast[[1]])))
-  
-  # add a column with a class name
-  dbclassname=rep(NA, length(class_ID))
-  for (i in 1:length(levels(invec[[classcolname]]))){
-    dbclassname[which(class_ID==i, arr.ind=TRUE)] = levels(invec[[classcolname]])[i]
-  }
-  commonclasses= match(sort(unique(dbclassname)), sort(levels(invec[[classcolname]])))
-  if(length(commonclasses)< length(levels(invec[[classcolname]]))){
-    missing=sort(levels(invec[[classcolname]]))[-commonclasses]
-    warning(paste(paste("the class", missing, sep= " "), 
-                  "has no valid pixels in input raster", sep=" "))
-    print(paste(paste("Warning: the class", missing, sep= " "), 
-                "has no valid pixel values in the input raster", sep=" "))
-  }
-  
-  dataset=cbind(class_ID, dbclassname, dataset)
-  rm(class_ID, dbclassname)
-  
-  #I HAVE TO REMOVE DATA THAT HAS BEEN MASKED FROM THE RASTER
-  # I MIGHT HAVE TO BRING BACK THE STACKMASK FUNCTION
-  # ranges=c(-Inf,1,NA, 1,99999,1)
-  # calibmsk=reclassify(calibrast,ranges)
-  # calibmsk=calibmsk*inrastmskd[[2]]
-  
-  for (i in 1:nlayers(inrast[[1]])){
-    dataset[,i+2]=extractval(inrast[[1]][[i]], calibmsk)
-    print(paste(i, "layers extracted", sep=" "))
-  }
-  names(dataset)=c("class_ID", "class_name", names(inrast[[1]]))
-  return(dataset)
-}
 AccuPlot=function(conmatrix=confusion, location="top"){
   #Plots users and producers accuracy based on the results of a confusion matrix 
   # obtained through the application of the function caret::confusionMatrix
@@ -434,96 +363,7 @@ smg=function(inlist=listr, cca="FALSE", method="none", refitem=NA, mosaicitems=c
   names(mosaicYr)=names(inlist[[refitem]])[normbands]
   return(mosaicYr)
 }
-tmg=function(inrast=x, calibObject=Calib, ntrees=1000, classcolname="class", 
-             validObject=Valid, maptype="class", savefiles=TRUE, 
-             outfile="outfilename", plot=TRUE, tmproduce=TRUE){
-  # tmg (thematic map generator) produces a thematic map based on either training data or
-  # previously calibrated randomForest object. 
-  # inrast: input raster with each band corresponding to a predictor
-  # calibObj: either a spatial dataframe containing the training data or a previously
-  # calibrated randomForest object
-  # classcolname: the column in the attributes of the spatial dataframe containing the name
-  # of the classes to predict (OJO: generalize for random forest regression)
-  # validdata: a spatial dataframe containing the validation data. If validdata is no spatial dataframe, no validation is performed
-  # maptype: whether a randomForest regression or classification will be performed
-  # (OJO look for the name to be used when it is a random forest regression. I believe it is "response") )
-  require(raster, randomForest, rgdal, caret)
-  names(inrast)=paste("b", c(1:length(names(inrast))), sep="")
-  
-  # if calibobject is a spatial object (point, polygon, line), then use it to calibrate
-  # a random forest classification
-  if((substr(class(calibObject)[1],1,7)=="Spatial")==TRUE){
-    #if((class(calibObject)=="data.frame")==TRUE){
-    
-    # Make the band names and the names of the variables in the RF object compatible
-    # OJO: These names are reverted to the original band names when I use stack2df()
-    
-    # extract pixel values in a dataframe
-    print("extracting pixel values for training areas")
-    calibdf=stack2df(inrast=inrast, invec=calibObject, classcolname=classcolname)
-    #calibdf=calibObject
-    # for some reason satack2df is not assigning the names of inrast to the respective columns in calidbdf
-    names(calibdf)[3:ncol(calibdf)]<- names(inrast) 
-    
-    # produce a formula with the band names to be entered in the RF classification equal
-    # to the input band names
-    formulaStr=as.formula(paste(paste(names(calibdf)[2],"~"), paste(names(inrast), 
-                                                                    sep=" ", collapse="+"), sep=" "))
-    # produce classification object
-    print("calibrating classification algorithm")
-    class.RF<-randomForest::randomForest(formula = formulaStr, data=calibdf, importance = TRUE, 
-                                         ntree =ntrees, proximity=FALSE)
-    if(savefiles==TRUE){
-      save(class.RF, file=paste(outfile, "_RF.RData", sep=""))
-    }
-  } else if(substr(class(calibObject)[1],1,12)=="randomForest"){
-    # if the object is randomForest type, then us it to classify inraster
-    class.RF<-calibObject
-    
-    #test that the number of predictors in the RF object is 
-    # equal to the number of bands in inrast
-    # OJO: We have to make sure that the predictors in the RF object 
-    # should have the same names as names(inrast)
-    if(length(names(inrast))!=length(attributes(class.RF$terms)$term.labels)){
-      stop("the number of bands in the input raster should be the same as the number of predictors to calibrate the random forest object")
-    }
-  } else {
-    stop("calibObject is the wrong class. Provide either a spatial dataframe or randomForest object")        
-  }
-  
-  if((substr(class(validObject)[1],1,7)=="Spatial")==TRUE){
-    if(length(levels(validObject[[classcolname]]))!=length(rownames(class.RF$confusion))){
-      stop('The number of classes in validObject should be the same as the number of classes in calibObject')
-    }
-    print("extracting pixel values for validation areas")
-    if(is.na((mean(match(rownames(class.RF$confusion),levels(validObject[[classcolname]])))))==TRUE){
-      stop("The names of classes in the calibration object do not match the ones in the validation object")
-    }
-    
-    validdf=stack2df(inrast=inrast, invec=validObject, classcolname=classcolname)
-    #validdf<-validObject
-    # for some reason satack2df is not assigning the names of inrast to the respective columns in validdf
-    names(validdf)[3:ncol(validdf)]<- names(inrast)
-    
-    print("generating predictions for validation areas")
-    results<-raster::predict(class.RF, validdf, type=maptype)
-    print("calculating accuracy metrics")
-    conmatrix<- caret::confusionMatrix(as.factor(results),as.factor(validdf$class_name))
-    if(savefiles==TRUE){save(conmatrix, file=paste(outfile, "accumatrix.RData", sep="_"))}
-  
-  }
-  
-  if (tmproduce==TRUE){
-    print("classifying map")
-    tm<-raster::predict(object=inrast, type=maptype, model=class.RF, 
-                        fun=predict, ext=NULL, const=NULL, na.rm=TRUE)
-    if(savefiles==TRUE){
-      print("saving classified map to disc")
-      writeRaster(tm, filename=paste(outfile, "tif", sep="."))
-      }
-  }
-  # return(tm) # not sure what object to return since it depends on the inputs
-}
+
 lcupdate=function(refclass=NA, tarclass=NA, nochmsk=NA){
   # lcupdate produces an update of a target land cover map (tarclass) by replacing
   # the classification values of pixels located in areas considered as no change as
@@ -540,4 +380,167 @@ lcupdate=function(refclass=NA, tarclass=NA, nochmsk=NA){
   return(tarclass)
 }
 
+# THESE FUNCTIONS HAVE BEEN UPDATED IN THE PACKAGE. USE THOSE!
+# tmg=function(inrast=x, calibObject=Calib, ntrees=1000, classcolname="class", 
+#              validObject=Valid, maptype="class", savefiles=TRUE, 
+#              outfile="outfilename", plot=TRUE, tmproduce=TRUE){
+#   # tmg (thematic map generator) produces a thematic map based on either training data or
+#   # previously calibrated randomForest object. 
+#   # inrast: input raster with each band corresponding to a predictor
+#   # calibObj: either a spatial dataframe containing the training data or a previously
+#   # calibrated randomForest object
+#   # classcolname: the column in the attributes of the spatial dataframe containing the name
+#   # of the classes to predict (OJO: generalize for random forest regression)
+#   # validdata: a spatial dataframe containing the validation data. If validdata is no spatial dataframe, no validation is performed
+#   # maptype: whether a randomForest regression or classification will be performed
+#   # (OJO look for the name to be used when it is a random forest regression. I believe it is "response") )
+#   require(raster, randomForest, rgdal, caret)
+#   names(inrast)=paste("b", c(1:length(names(inrast))), sep="")
+#   
+#   # if calibobject is a spatial object (point, polygon, line), then use it to calibrate
+#   # a random forest classification
+#   if((substr(class(calibObject)[1],1,7)=="Spatial")==TRUE){
+#     #if((class(calibObject)=="data.frame")==TRUE){
+#     
+#     # Make the band names and the names of the variables in the RF object compatible
+#     # OJO: These names are reverted to the original band names when I use stack2df()
+#     
+#     # extract pixel values in a dataframe
+#     print("extracting pixel values for training areas")
+#     calibdf=stack2df(inrast=inrast, invec=calibObject, classcolname=classcolname)
+#     #calibdf=calibObject
+#     # for some reason satack2df is not assigning the names of inrast to the respective columns in calidbdf
+#     names(calibdf)[3:ncol(calibdf)]<- names(inrast) 
+#     calibdf[[2]]=as.factor(calibdf[[2]])
+#     
+#     # produce a formula with the band names to be entered in the RF classification equal
+#     # to the input band names
+#     formulaStr=as.formula(paste(paste(names(calibdf)[2],"~"), paste(names(inrast), 
+#                                                                     sep=" ", collapse="+"), sep=" "))
+#     # produce classification object
+#     print("calibrating classification algorithm")
+#     class.RF<-randomForest::randomForest(formula = formulaStr, data=calibdf, importance = TRUE, 
+#                                          ntree =ntrees, proximity=FALSE)
+#     if(savefiles==TRUE){
+#       save(class.RF, file=paste(outfile, "_RF.RData", sep=""))
+#     }
+#   } else if(substr(class(calibObject)[1],1,12)=="randomForest"){
+#     # if the object is randomForest type, then use it to classify inraster
+#     class.RF<-calibObject
+#     
+#     #test that the number of predictors in the RF object is 
+#     # equal to the number of bands in inrast
+#     # OJO: We have to make sure that the predictors in the RF object 
+#     # should have the same names as names(inrast)
+#     if(length(names(inrast))!=length(attributes(class.RF$terms)$term.labels)){
+#       stop("the number of bands in the input raster should be the same as the number of predictors to calibrate the random forest object")
+#     }
+#   } else {
+#     stop("calibObject is the wrong class. Provide either a spatial dataframe or randomForest object")        
+#   }
+#   
+#   if((substr(class(validObject)[1],1,7)=="Spatial")==TRUE){
+#     if(length(levels(validObject[[classcolname]]))!=length(rownames(class.RF$confusion))){
+#       stop('The number of classes in validObject should be the same as the number of classes in calibObject')
+#     }
+#     print("extracting pixel values for validation areas")
+#     if(is.na((mean(match(rownames(class.RF$confusion),levels(validObject[[classcolname]])))))==TRUE){
+#       stop("The names of classes in the calibration object do not match the ones in the validation object")
+#     }
+#     
+#     validdf=stack2df(inrast=inrast, invec=validObject, classcolname=classcolname)
+#     #validdf<-validObject
+#     # for some reason satack2df is not assigning the names of inrast to the respective columns in validdf
+#     names(validdf)[3:ncol(validdf)]<- names(inrast)
+#     
+#     print("generating predictions for validation areas")
+#     results<-raster::predict(class.RF, validdf, type=maptype)
+#     print("calculating accuracy metrics")
+#     conmatrix<- caret::confusionMatrix(as.factor(results),as.factor(validdf$class_name))
+#     if(savefiles==TRUE){save(conmatrix, file=paste(outfile, "accumatrix.RData", sep="_"))}
+#   }
+#   
+#   if (tmproduce==TRUE){
+#     print("classifying map")
+#     tm<-raster::predict(object=inrast, type=maptype, model=class.RF, 
+#                         fun=predict, ext=NULL, const=NULL, na.rm=TRUE)
+#     if(savefiles==TRUE){
+#       print("saving classified map to disc")
+#       writeRaster(tm, filename=paste(outfile, "tif", sep="."))
+#     }
+#   }
+#   # return(tm) # not sure what object to return since it depends on the inputs
+# }
+
+# stack2df=function(inrast=rastack,invec=polygons, classcolname="class"){
+#   # extracts into a data frame the pixel values for all bands from different classes
+#   # defined in a spatial dataframe
+#   # inrast: the raster dataset containing pixel values to extract in [[1]]
+#   # invec: spatial dataframe object defining the locations where the data
+#   # should be extracted from 
+#   # classcolname: the column in the spatial dataframe containing the names 
+#   # of the attributes associated to those areas
+#   # value: a data frame with columns representing the pixel values in each band for
+#   # the areas labeled as defined by classcolname
+#   if (is.null(intersect(extent(invec), extent(inrast)))){
+#     stop("the extents of inrast and invec do not overlap")
+#   }
+#   if(as.character(crs(inrast))!= as.character(crs(invec))){
+#     stop("inrast and invec should have the same projection")
+#   }
+#   # required function
+#   extractval=function(inraster=inrast, msk=msk){
+#     outvector=raster::mask(inraster, msk) 
+#     outvector=na.omit(raster::getValues(outvector))
+#     return(outvector)
+#   }
+#   
+#   # assign class ID to each class
+#   invec$class_ID=rep(NA, nrow(invec@data))
+#   for (i in 1:length(invec[[classcolname]])){
+#     invec$class_ID[which(invec[[classcolname]]==levels(invec[[classcolname]])[i])]=i
+#   }
+#   
+#   # mask the input raster including  pixels with valid values in all bands only
+#   inrast=stackmask(inrast)
+#   
+#   # create a raster of class_ids. TRY gdalUtils::gdal_rasterize. It might be faster!!!
+#   calibrast=raster::rasterize(invec, inrast[[2]], field=invec$class_ID)
+#   calibmsk<-maskfun(calibrast, 0, 1, NA)
+#   calibmsk=raster::mask(calibmsk, inrast[[2]])
+#   
+#   # Extract pixel values into a dataframe
+#   class_ID=(extractval(calibrast, calibmsk))
+#   dataset=data.frame(matrix(data=NA, nrow=length(class_ID), ncol=nlayers(inrast[[1]])))
+#   
+#   # add a column with a class name
+#   dbclassname=rep(NA, length(class_ID))
+#   for (i in 1:length(levels(invec[[classcolname]]))){
+#     dbclassname[which(class_ID==i, arr.ind=TRUE)] = levels(invec[[classcolname]])[i]
+#   }
+#   commonclasses= match(sort(unique(dbclassname)), sort(levels(invec[[classcolname]])))
+#   if(length(commonclasses)< length(levels(invec[[classcolname]]))){
+#     missing=sort(levels(invec[[classcolname]]))[-commonclasses]
+#     warning(paste(paste("the class", missing, sep= " "), 
+#                   "has no valid pixels in input raster", sep=" "))
+#     print(paste(paste("Warning: the class", missing, sep= " "), 
+#                 "has no valid pixel values in the input raster", sep=" "))
+#   }
+#   
+#   dataset=cbind(class_ID, dbclassname, dataset)
+#   rm(class_ID, dbclassname)
+#   
+#   #I HAVE TO REMOVE DATA THAT HAS BEEN MASKED FROM THE RASTER
+#   # I MIGHT HAVE TO BRING BACK THE STACKMASK FUNCTION
+#   # ranges=c(-Inf,1,NA, 1,99999,1)
+#   # calibmsk=reclassify(calibrast,ranges)
+#   # calibmsk=calibmsk*inrastmskd[[2]]
+#   
+#   for (i in 1:nlayers(inrast[[1]])){
+#     dataset[,i+2]=extractval(inrast[[1]][[i]], calibmsk)
+#     print(paste(i, "layers extracted", sep=" "))
+#   }
+#   names(dataset)=c("class_ID", "class_name", names(inrast[[1]]))
+#   return(dataset)
+# }
 

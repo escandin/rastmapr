@@ -74,45 +74,7 @@ thresraster2<-function (refstack, tarstack, cca=FALSE, propsamp=1){
   sumstandardizediff = calc(standardizediff^2, sum)#, na.rm = TRUE)
   return(sumstandardizediff)
 }
-nochg2<-function (thresraster, pvalue = 1e-02, distype="gamma",
-                  fitmethod="mle", propsamp=0.01, degfree=NULL){#degfree, filename="gammadist") {
-  # thresraster: a file containing the sum of the square of
-  #       the standardized differences (SSSD) of changes between target and reference images.
-  # pvalue: pvalue set to define the threshold for selecting the PIFs
-  # distype: the type of satistical distribution assumed for the sum of the square of
-  #       the standardized differences (SSSD) of changes between target and reference images.
-  #       It is very likely gamma but also accepts "chisquare". I SHOULD GENERALIZE IT TO 
-  #       ACCEPT ALSO negative exponential and weibull
-  # fitmethod: the method to be used to fit the statistical distribution. "moments" 
-  #       might also work but it has not been tested
-  # propsamp: proportion of pixels to sample for fitting the statistical distribution.
-  # degfree:  only applies for chisquare. It sould be equal to the number of layers in the 
-  #      input raster stacks
-  # distype: "gamma", "chisq", ("weibull", "nomal" "negative exponential") 
 
-  print("calculating change/no-change mask")
-  if (!is.numeric(propsamp) & propsamp<0 & propsamp>1){
-    stop("propsamp should be a number between 0 and 1")
-  }
-  samp=raster::sampleRandom(thresraster, length(thresraster)*propsamp)
-  if(distype=="chisq"){
-    threshold = qchisq(pvalue, degfree)
-    #simulated=rchisq(length(samp), degfree)
-    fit.stats<-ks.test(samp,  pchisq, df=6)} else {
-    #fit.stats=list(samp, simulated, ks)} 
-      require(fitdistrplus)
-    #if(cca==TRUE) {thresraster=thresraster[[1]]}
-      fit.stats <- fitdistrplus::fitdist(samp, dist =distype)
-      threshold= qgamma(pvalue, shape=fit.stats$estimate[1],
-                        rate=fit.stats$estimate[2])
-  }
-  if(threshold < minValue(thresraster)){
-    warning("the pvalue selected produces a threshold that is larger that the minimum 
-        value in thresraster producing an NA. Select a higher pvalue to produce a valid threshold mask")
-  nochgmsk=NA} else {nochgmsk=maskfun(thresraster, threshold, NA, 1)}
-  nochgmsk=list(nochgmsk, fit.stats)
-  return(nochgmsk)
-}
 calibrationParameters2<-function (ref, tar, threshMask){#, 
   print('extracting reflectance values from no change pixels')
   refmsk=stackmask(ref)[[2]]
@@ -422,6 +384,46 @@ CalibrateRaster2 <- function (pifs, mlayer, round. = 0) {
   return(normedstack)
 }
 
+# THESE FUNCTIONS HAVE BEEN UPDATED IN THE PACKAGE. USE THOSE!
+# nochg2<-function (thresraster, pvalue = 1e-02, distype="gamma",
+#                   fitmethod="mle", propsamp=0.01, degfree=NULL){#degfree, filename="gammadist") {
+#   # thresraster: a file containing the sum of the square of
+#   #       the standardized differences (SSSD) of changes between target and reference images.
+#   # pvalue: pvalue set to define the threshold for selecting the PIFs
+#   # distype: the type of satistical distribution assumed for the sum of the square of
+#   #       the standardized differences (SSSD) of changes between target and reference images.
+#   #       It is very likely gamma but also accepts "chisquare". I SHOULD GENERALIZE IT TO 
+#   #       ACCEPT ALSO negative exponential and weibull
+#   # fitmethod: the method to be used to fit the statistical distribution. "moments" 
+#   #       might also work but it has not been tested
+#   # propsamp: proportion of pixels to sample for fitting the statistical distribution.
+#   # degfree:  only applies for chisquare. It sould be equal to the number of layers in the 
+#   #      input raster stacks
+#   # distype: "gamma", "chisq", ("weibull", "nomal" "negative exponential") 
+#   
+#   print("calculating change/no-change mask")
+#   if (!is.numeric(propsamp) & propsamp<0 & propsamp>1){
+#     stop("propsamp should be a number between 0 and 1")
+#   }
+#   samp=raster::sampleRandom(thresraster, length(thresraster)*propsamp)
+#   if(distype=="chisq"){
+#     threshold = qchisq(pvalue, degfree)
+#     #simulated=rchisq(length(samp), degfree)
+#     fit.stats<-ks.test(samp,  pchisq, df=6)} else {
+#       #fit.stats=list(samp, simulated, ks)} 
+#       require(fitdistrplus)
+#       #if(cca==TRUE) {thresraster=thresraster[[1]]}
+#       fit.stats <- fitdistrplus::fitdist(samp, dist =distype)
+#       threshold= qgamma(pvalue, shape=fit.stats$estimate[1],
+#                         rate=fit.stats$estimate[2])
+#     }
+#   if(threshold < minValue(thresraster)){
+#     warning("the pvalue selected produces a threshold that is larger that the minimum 
+#         value in thresraster producing an NA. Select a higher pvalue to produce a valid threshold mask")
+#     nochgmsk=NA} else {nochgmsk=maskfun(thresraster, threshold, NA, 1)}
+#   nochgmsk=list(nochgmsk, fit.stats)
+#   return(nochgmsk)
+# }
 
 # PIFmodel2<-function (strips, distype= "gamma", distsamp=0.01, cca=FALSE,#minvalid = -Inf, maxvalid = Inf, 
 #                      ccasamp=1, pvalue = 2e-02, degfree=NULL, minPIF=2){# degfree = nlayers(strips[[2L]])\
