@@ -37,7 +37,7 @@ nochg2 <- structure(function #Change and no change mask
       require(fitdistrplus)
       samp=raster::sampleRandom(thresraster, length(thresraster)*propsamp)
       if(distype=="chisq"){
-    #threshold = qchisq(pvalue, degfree)
+    threshold = qchisq(pvalue, degfree)
     #simulated=rchisq(length(samp), degfree)
     fit.stats<-ks.test(samp,  pchisq, df=6)} else {
     #fit.stats=list(samp, simulated, ks)} else {

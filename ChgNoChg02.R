@@ -3,12 +3,16 @@ library(raster)
 library(rgdal)
 #library(rasterMapR)
 library(fitdistrplus)
+library(R.utils)
+sourcedir <- '/Users/tug61163/Documents/Repositories/rastmapr/rasterMapR/R'
+sourceDirectory(sourcedir, modifiedOnly=FALSE)
+
 
 # MAC
 path="/Users/tug61163/Documents/PROJECTS/NASAGeo/Manuscripts/ChgNoChgManuscript/Orinoquia"
 path="/Users/tug61163/Documents/PROJECTS/NASAGeo/Manuscripts/ChgNoChgManuscript/Pucallpa"
 path="/Users/tug61163/Documents/PROJECTS/NASAGeo/Manuscripts/ChgNoChgManuscript/Mexico"
-
+#paths=c(path1, path2, path3)
 # WINDOWS
 path=#("X:/VictorShare/s3dFiles/Pucallpa")
   #("X:/VictorShare/s3dFiles/Orinoquia")
@@ -45,27 +49,32 @@ for (i in 3:4){ # MAKE SURE THE selected elements correspond to the sat.nm in EE
 ####### Retrieve datasets as a stack
 stacks=list()
 normbands=seq(1,6)
+setwd(path)
 stacknames<- list.files('.', pattern='mskd_.grd')
+
 for (i in 1:length(stacknames)){
-  stacks[[i]]=raster::stack(stacknames[i], bands=normbands)
-  #names(stacks[[i]])=layernames[normbands]
-  #writeRaster(stacks[[i]], filename=paste(names(stacks)[i], "mskd_", sep="_"), 
-  #            format="raster",  datatype="INT2S")
-}
+    stacks[[i]]=raster::stack(stacknames[i], bands=normbands)
+    #names(stacks[[i]])=layernames[normbands]
+    #writeRaster(stacks[[i]], filename=paste(names(stacks)[i], "mskd_", sep="_"), 
+    #            format="raster",  datatype="INT2S")
+ }
+
 stacknames= substr(stacknames, 1, nchar(stacknames)-16)
 names(stacks)=stacknames
 plotRGB(stacks[[1]], r=4, g=3, b=2, stretch="lin")
 
-ref=#c(2,4) #Orinoquia
-c(1,2)
-tar=#c(1,3) #Orinoquia
-c(3,4)
+ref=c(2,4) #Orinoquia
+#c(1,2) 
+tar=c(1,3) #Orinoquia
+#c(3,4) 
 for(i in 1:length(ref)){
   instacks=list(stacks[[tar[[i]]]], stacks[[ref[[i]]]])
   names(instacks)=c(stacknames[[tar[[i]]]], stacknames[[ref[[i]]]])
+  a=Sys.time()
   s3dmod=s3d(strips=instacks, thres=1e-2, distype="chisq",
              pval.pif=1e-3,  pval.chg=0.99, cca=TRUE, 
              prefix=names(instacks)[1])
+  b=Sys.time-a
   save(s3dmod, file=paste(paste(names(instacks)[1],'s3d_chisqCCA', sep="_"),  "RData", sep="."))
 }
 

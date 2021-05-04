@@ -17,8 +17,8 @@ tmg <- structure(function #Thematic map generator
     savefiles=TRUE, ##<<\code{}.
     outfile="outfilename", ##<<\code{character}.
     plot=TRUE, ##<<\code{logical}.
-    tmproduce=TRUE ##<<\code{numeric}.
-    dt="INT1U", ##<<\code{character}
+    tmproduce=TRUE, ##<<\code{numeric}.
+    dt="INT1U" ##<<\code{character}.
 ){
   # tmg (thematic map generator) produces a thematic map based on either training data or
   # previously calibrated randomForest object. 
