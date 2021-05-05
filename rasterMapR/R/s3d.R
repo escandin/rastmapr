@@ -65,6 +65,7 @@ s3d <- structure(function #Iterated Sum of the Squared Standaradized
  
   # obtain a first no change mask
   print("calculating initial parameters")
+  start=Sys.time()
   thrs <- thresraster2(strips[[2L]], strips[[1L]], cca=cca)#, degfree = nlayers(strips[[2L]])-1,
   if (distype=="chisq"){
     noch <- nochg2(thrs, pvalue= pval.pif, distype=distype, 
@@ -117,10 +118,11 @@ s3d <- structure(function #Iterated Sum of the Squared Standaradized
       distparam$rate=noch[[2]]$estimate[2]
   }
   distparamtot=distparam
- 
+  itertime=Sys.time()-a
   print('iterating PIF extraction until the change in the distribution parameters are below thres values')
   repeat{
     i <- i+1
+    start=Sys.time()
     if (distype=="chisq"){
       noch <- nochg2(thrs, pvalue= pval.chg, distype=distype, 
                      propsamp=distsamp, degfree=nlayers(strips[[1]]))
@@ -205,6 +207,7 @@ s3d <- structure(function #Iterated Sum of the Squared Standaradized
     if (delta[length(delta)]<thres){
       break
     }
+    itertime=rbind(itertime, Sys.time()-a)
     if (i==maxiter){
       break
     }
@@ -215,16 +218,18 @@ s3d <- structure(function #Iterated Sum of the Squared Standaradized
     plot(lmparamtot$iter[which(lmparamtot$band==b)], 
          lmparamtot$intercept[which(lmparamtot$band==b)], xlab="band", ylab="intercept")
   }
-  par(mfrow=c(round(sqrt(nlayers(strips[[1]])))+1,round(sqrt(nlayers(strips[[1]])))))
-  for(b in 1:nlayers(strips[[1]])){
-    plot(lmparamtot$iter[which(lmparamtot$band==b)], 
-         lmparamtot$slope[which(lmparamtot$band==b)], xlab="band", ylab="slope")
-  }
-  
-  par(mfrow=c(round(sqrt(nlayers(strips[[1]])))+1,round(sqrt(nlayers(strips[[1]])))))
-  for (b in 1:nlayers(strips[[1]])){
-    plot(calp$data[[b]][,1]~calp$data[[b]][,2], xlab="target", ylab="reference")
-    abline(unlist(calp$parameters[[b]][1])[1], unlist(calp$parameters[[b]][1])[2])
+  if(fitline==TRUE){
+    par(mfrow=c(round(sqrt(nlayers(strips[[1]])))+1,round(sqrt(nlayers(strips[[1]])))))
+    for(b in 1:nlayers(strips[[1]])){
+      plot(lmparamtot$iter[which(lmparamtot$band==b)], 
+           lmparamtot$slope[which(lmparamtot$band==b)], xlab="band", ylab="slope")
+    }
+    
+    par(mfrow=c(round(sqrt(nlayers(strips[[1]])))+1,round(sqrt(nlayers(strips[[1]])))))
+    for (b in 1:nlayers(strips[[1]])){
+      plot(calp$data[[b]][,1]~calp$data[[b]][,2], xlab="target", ylab="reference")
+      abline(unlist(calp$parameters[[b]][1])[1], unlist(calp$parameters[[b]][1])[2])
+    }
   }
   if (distype=="chisq"){
     par(mfrow=c(1,1))
@@ -241,8 +246,8 @@ s3d <- structure(function #Iterated Sum of the Squared Standaradized
     names(paramstats)=c('lmparam', "distparam")} else{
       paramstats=distparamtot}
   
-  out=list(thrs[[1]], noch, calp[[1]], calp[[2]], paramstats)
-  names(out)=c("sumstandardizediff", "noch", "data", "parameters", "paramstats")
+  out=list(thrs[[1]], noch, calp[[1]], calp[[2]], paramstats, itertime)
+  names(out)=c("sumstandardizediff", "noch", "data", "parameters", "paramstats","itertime")
   return(out)
 ### \code{}... 
 } , ex=function(){
