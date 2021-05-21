@@ -90,13 +90,14 @@ setwd("/Users/tug61163/Documents/PROJECTS/NASAGeo/Manuscripts/ChgNoChgManuscript
 load("ConvergenceAll.RData")
 datatot1=datatot
 datatot1$location=factor(datatot1$location, levels = c("Orinoquia", "Pucallpa", "Mexico"))
+datatot1$distribution[which(datatot1$distribution=="Chisq")]="Chi-square"
 pdf(file="Convergence.pdf", width = 12, height=9, paper='special')
   ggplot(datatot1, aes(x=datatot1$iter, y=datatot1$ksD, col=distribution)) + 
   facet_grid(cols=vars(location))+
    geom_line() + ylim(0, 0.5)+ 
     theme_bw(base_size=24)+
     theme(legend.title = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-    xlab("KS D statistic") + ylab("Iteration")+
+    ylab("KS D statistic") + xlab("Iteration")+
     scale_x_continuous(breaks = seq(0, 15, by = 3))+
     scale_colour_manual(values = c("#FB9A99", "#8DA0CB"))
 dev.off()

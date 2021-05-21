@@ -118,7 +118,7 @@ s3d <- structure(function #Iterated Sum of the Squared Standaradized
       distparam$rate=noch[[2]]$estimate[2]
   }
   distparamtot=distparam
-  itertime=Sys.time()-a
+  itertime=Sys.time()-start
   print('iterating PIF extraction until the change in the distribution parameters are below thres values')
   repeat{
     i <- i+1
@@ -207,18 +207,19 @@ s3d <- structure(function #Iterated Sum of the Squared Standaradized
     if (delta[length(delta)]<thres){
       break
     }
-    itertime=rbind(itertime, Sys.time()-a)
+    itertime=rbind(itertime, Sys.time()-start)
     if (i==maxiter){
       break
     }
   }
-  par(mar = c(4, 4, 1, 1) + 0.1)
-  par(mfrow=c(round(sqrt(nlayers(strips[[1]])))+1,round(sqrt(nlayers(strips[[1]])))))
-  for(b in 1:nlayers(strips[[1]])){
-    plot(lmparamtot$iter[which(lmparamtot$band==b)], 
-         lmparamtot$intercept[which(lmparamtot$band==b)], xlab="band", ylab="intercept")
-  }
+  
   if(fitline==TRUE){
+    par(mar = c(4, 4, 1, 1) + 0.1)
+    par(mfrow=c(round(sqrt(nlayers(strips[[1]])))+1,round(sqrt(nlayers(strips[[1]])))))
+    for(b in 1:nlayers(strips[[1]])){
+      plot(lmparamtot$iter[which(lmparamtot$band==b)], 
+           lmparamtot$intercept[which(lmparamtot$band==b)], xlab="band", ylab="intercept")
+    }
     par(mfrow=c(round(sqrt(nlayers(strips[[1]])))+1,round(sqrt(nlayers(strips[[1]])))))
     for(b in 1:nlayers(strips[[1]])){
       plot(lmparamtot$iter[which(lmparamtot$band==b)], 
@@ -243,12 +244,16 @@ s3d <- structure(function #Iterated Sum of the Squared Standaradized
   } #else {paramstats=lmparamtot}
   if(fitline==TRUE){
     paramstats=list(lmparamtot, distparamtot)
-    names(paramstats)=c('lmparam', "distparam")} else{
-      paramstats=distparamtot}
-  
-  out=list(thrs[[1]], noch, calp[[1]], calp[[2]], paramstats, itertime)
-  names(out)=c("sumstandardizediff", "noch", "data", "parameters", "paramstats","itertime")
-  return(out)
+    names(paramstats)=c('lmparam', "distparam")
+    out=list(thrs[[1]], noch, calp[[1]], calp[[2]], paramstats, itertime)
+    names(out)=c("sumstandardizediff", "noch", "data", "parameters", "paramstats","itertime")
+  } else{
+      paramstats=distparamtot
+      out=list(thrs[[1]], noch, itertime)
+      names(out)=c("sumstandardizediff", "noch","itertime")
+      
+       }
+    return(out)
 ### \code{}... 
 } , ex=function(){
 tarFiles <- c('LT050070651987081201T1-SC20181031175314.tar.gz',

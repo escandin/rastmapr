@@ -15,8 +15,8 @@ load('acc_no_change.RData')
 names(accu_no_ch)=c("Accuracy", "Interpreter", "Type", "Parameterization", "Location", "Proportion", "Window")
 names(accu_ch)=c("Accuracy", "Interpreter", "Type", "Parameterization", "Location", "Proportion", "Window")
 #mapvalues(accu_no_ch$Parameterization, from = c("cc", "ch_sq", "gamma"), to = c("Gamma CCA", "Chisq", "Gammma"))
-levels(accu_no_ch$Parameterization)=c("Gamma CCA", "Chisq", "Gamma")
-levels(accu_ch$Parameterization)=c("Gamma CCA", "Chisq", "Gamma")
+levels(accu_no_ch$Parameterization)=c("Gamma CCA", "Chi-square", "Gamma")
+levels(accu_ch$Parameterization)=c("Gamma CCA", "Chi-square", "Gamma")
 ##############################
 #Boxplot no-change V2
 pdf(file='NoChgAccuracyV2.pdf',

@@ -4,9 +4,9 @@ library(rgdal)
 #library(rasterMapR)
 library(fitdistrplus)
 library(R.utils)
+library(profvis)
 sourcedir <- '/Users/tug61163/Documents/Repositories/rastmapr/rasterMapR/R'
 sourceDirectory(sourcedir, modifiedOnly=FALSE)
-
 
 # MAC
 path="/Users/tug61163/Documents/PROJECTS/NASAGeo/Manuscripts/ChgNoChgManuscript/Orinoquia"
@@ -63,19 +63,28 @@ stacknames= substr(stacknames, 1, nchar(stacknames)-16)
 names(stacks)=stacknames
 plotRGB(stacks[[1]], r=4, g=3, b=2, stretch="lin")
 
-ref=#c(2,4) #Orinoquia
+ref=c(2,4) #Orinoquia
 c(1,2) 
-tar=#c(1,3) #Orinoquia
+tar=c(1,3) #Orinoquia
 c(3,4) 
+i=1
+
 for(i in 1:length(ref)){
   instacks=list(stacks[[tar[[i]]]], stacks[[ref[[i]]]])
   names(instacks)=c(stacknames[[tar[[i]]]], stacknames[[ref[[i]]]])
-  a=Sys.time()
+  #a=Sys.time()
+test=  profvis({
   s3dmod=s3d(strips=instacks, thres=1e-2, distype="gamma",
              pval.pif=1e-3,  pval.chg=0.99, cca=FALSE, fitline=FALSE,
              prefix=names(instacks)[1], writemasks=FALSE)
-  b=Sys.time()-a
-  save(s3dmod, file=paste(paste(names(instacks)[1],'s3d_chisqCCA', sep="_"),  "RData", sep="."))
+  }, height = "400px")
+  #b=Sys.time()-a
+  save(test, file=paste(path, (paste(paste(names(instacks)[1],
+                                           's3d_GammaPerform', sep="_"),  
+                                     "RData", sep=".")), sep="/"))  
+  #save(s3dmod, file=paste(path, (paste(paste(names(instacks)[1],
+                                           #  's3d_GammaItertime', sep="_"),  
+                                       #"#RData", sep=".")), sep="/"))
 }
 
 
