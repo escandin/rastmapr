@@ -113,7 +113,7 @@ smg <- structure(function #Seamless mosaic generator
       #names(terrainvar)<-c('slope', 'aspect')
       #rm(slope,aspect,dem)
       print ("performing topographic correction")
-      meta<-RStoolbox::readMeta(paste(names(inlist)[[j]], "xml", sep="."))
+      meta<-RStoolbox::readMeta(paste(names(inlist)[[j]], "MTL.xml", sep=""))
       inlist[[j]]<-RStoolbox::topCor(inlist[[j]], dem=subdem, metaData=meta, method="C")
       rm(subdem)
       # THIS PART OF THE WORKAROUND: remove temporary dem file so that a new one can be saved
