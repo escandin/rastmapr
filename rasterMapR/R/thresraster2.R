@@ -22,6 +22,7 @@ thresraster2 <- structure(function #Threshold raster
     dif=refstack-tarstack}
 
   standardizediff=dif
+
   # Check if it is better to do this directly on the raster
   for (k in 1:nlayers(dif)) {
     difvec = raster::getValues(dif[[k]])
@@ -31,8 +32,8 @@ thresraster2 <- structure(function #Threshold raster
     standardizediff[[k]] = (meandif - dif[[k]])/sddif
     print(paste("standardized differences calculated for band", k, sep = " "))
   }
-  
   sumstandardizediff = calc(standardizediff^2, sum)#, na.rm = TRUE)
+  return(sumstandardizediff)
   return(sumstandardizediff)
 ### \code{RasterLayer}. 
 } , ex=function(){
@@ -41,5 +42,5 @@ thresraster2 <- structure(function #Threshold raster
     tarPaths <- system.file(tarFiles, package = 'aRn')
     stack <- EEstackWithoutMeta(tarPaths, c(1,3:6))
     strips <- RasterIntersection(stack)
-    thrs <- thresraster(strips[[2L]], strips[[1L]])
+    thrs <- thresraster2(strips[[2L]], strips[[1L]])
 })

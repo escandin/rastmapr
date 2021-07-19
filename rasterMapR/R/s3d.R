@@ -67,6 +67,7 @@ s3d <- structure(function #Iterated Sum of the Squared Standaradized
   print("calculating initial parameters")
   start=Sys.time()
   thrs <- thresraster2(strips[[2L]], strips[[1L]], cca=cca)#, degfree = nlayers(strips[[2L]])-1,
+
   if (distype=="chisq"){
     noch <- nochg2(thrs, pvalue= pval.pif, distype=distype, 
                    propsamp=distsamp, degfree=nlayers(strips[[1]]))
