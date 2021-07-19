@@ -31,5 +31,5 @@ tarFiles <- c('LT050070651987081201T1-SC20181031175314.tar.gz',
 tarPaths <- system.file(tarFiles, package = 'aRn')
 stack <- EEstackWithoutMeta(tarPaths, c(1,3:6))
 strips <- RasterIntersection(stack)
-thrs <- thresraster(strips[[2L]], strips[[1L]])
+thrs <- thresraster2(strips[[2L]], strips[[1L]])
 }

@@ -39,7 +39,7 @@ tarFiles <- c('LT050070651987081201T1-SC20181031175314.tar.gz',
 tarPaths <- system.file(tarFiles, package = 'aRn')
 stack <- EEstackWithoutMeta(tarPaths, c(1,3:6))
 strips <- RasterIntersection(stack)
-thrs <- thresraster(strips[[2L]], strips[[1L]])
-noch <- nochg(thrs, degfree = nlayers(strips[[2L]]) - 1, pvalue = 4E-1)
+thrs <- thresraster2(strips[[2L]], strips[[1L]])
+noch <- nochg2(thrs, degfree = nlayers(strips[[2L]]) - 1, pvalue = 4E-1, propsamp=1)
 ## plot(noch)
 }

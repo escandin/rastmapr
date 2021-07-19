@@ -8,7 +8,8 @@ data or previously calibrated randomForest object.}
     validObject, maptype = "class", 
     savefiles = TRUE, 
     outfile = "outfilename", 
-    plot = TRUE, tmproduce = TRUE)}
+    plot = TRUE, tmproduce = TRUE, 
+    dt = "INT1U")}
 \arguments{
   \item{inrast}{\code{list}. List of input rasters}
   \item{calibObject}{\code{logical}.}
@@ -25,6 +26,7 @@ built.}
   \item{outfile}{\code{character}.}
   \item{plot}{\code{logical}.}
   \item{tmproduce}{\code{numeric}.}
+  \item{dt}{\code{character}.}
 }
 
 \value{return(tm) # not sure what object to return since it depends on the inputs}
