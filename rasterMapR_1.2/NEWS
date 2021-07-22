@@ -1,0 +1,15 @@
+Changes in rasterMapR 1.2
+Victor Gutierrez included/improved several
+functions. See the package documentation.
+
+Changes in aRn 1.2
+Changes in "equateEEname": preservation of names
+for raster stacks with same landsat satellites has been removed.
+
+Changes in "EEstackWithOutMeta": New argumen "meta.wd" to copy
+metadata in the workind directory was added.
+
+Changes in aRn 1.1
+New function "sampleRaster" and corresponding method "plot.sampleRaster"
+where programmed.
+
