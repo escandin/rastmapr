@@ -66,7 +66,7 @@ smg <- structure(function #Seamless mosaic generator
       msk=namaskplus(msk, 1, NA)
       #msk=namask(msk) # see function above
       if(savelcloudmsk==TRUE){
-      writeRaster(msk, filename=paste(paste("CloudMsk", stacknames[i], sep="_"), "tif", sep="."))
+      writeRaster(msk, filename=paste(paste("CloudMsk", stacknames[i], sep="_"), "tif", sep="."), overwrite=TRUE)
       }
     }
     inlist[[i]]=inlist[[i]][[normbands]] # only select bands to normalize
