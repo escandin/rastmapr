@@ -16,7 +16,7 @@
   \item{inlist}{\code{list}. List of input rasters}
   \item{cca}{\code{logical}.}
   \item{method}{\code{character}. "none" for no normalization,
-"aRn" for std diff normalization or "cor" for
+"s3d" for std diff normalization or "cor" for
 pearson correlation (pending)}
   \item{refitem}{. Item in the list corresponding to the
 raster to use as reference}
@@ -45,7 +45,7 @@ built.}
 \examples{
 tarFiles <- c('LT050070651987081201T1-SC20181031175314.tar.gz',
               'LT050060661988072201T1-SC20181031160603.tar.gz')
-tarPaths <- system.file(tarFiles, package = 'aRn')
+tarPaths <- system.file(tarFiles, package = 'rasterMapR')
 stack <- EEstackWithoutMeta(tarPaths, c(1:4))
 strips <- RasterIntersection(stack)
 ## thrs <- thresraster(strips[[2L]], strips[[1L]])
