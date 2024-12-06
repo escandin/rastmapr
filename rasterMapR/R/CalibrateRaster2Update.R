@@ -1,4 +1,4 @@
-CalibrateRaster2 <- structure(function #Calibrate raster
+CalibrateRaster2Update <- structure(function #Calibrate raster
 ### This function implements parameters from \code{\link{PIFmodel}} to
 ### calibrate multi- or hiper-spectral layers.
 (
@@ -14,15 +14,17 @@ CalibrateRaster2 <- structure(function #Calibrate raster
 ){
  coefs <- Map("coefficients", pifs)
   intercepts <- mapply(function(x) x[1L], coefs)
+  names(pifs)=names(mlayer)
   slopes <- mapply(function(x) x[2L], coefs)
   if (missing(mlayer)) 
     mlayer <- as.list(attr(pifs, "env"))[["strips"]]
-  radiostack <- mlayer[[1L]][[names(pifs)]]
+  #radiostack <- mlayer[[1L]][[names(pifs)]]
+  radiostack <- mlayer[[names(pifs)]]
   b = 1
   normedstack = intercepts[b] + (slopes[b] * radiostack[[b]])
   print(paste(b, "band processed", sep = " "))
-  for (b in 2:nlayers(radiostack)) {
-    normedstack = stack(normedstack, intercepts[b] + (slopes[b] * 
+  for (b in 2:nlyr(radiostack)) {
+    normedstack = c(normedstack, intercepts[b] + (slopes[b] * 
                                                         radiostack[[b]]))
     print(paste(b, "bands processed", sep = " "))
   }

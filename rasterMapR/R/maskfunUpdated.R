@@ -1,20 +1,22 @@
-namaskplus <- structure(function  # convert NAs 
-### This function convertes NAs  to a value indicated by toval and
-### any other values to a new value indicated by otherval
-
-                        ##details<< This function ...
+maskfunUpdated <- structure(function #Stack mask
+### This function sets a threshold value (thresh). Any pixels above
+### thresh are converted to aboveval. Any pixels bellow or equal to
+### thresh are converted to belowval
+                       ##details<< This function ...
 (
-    x, ##<<\code{}. 
-    toval, ##<<\code{}.
-    ##\code{PIFmodel2}.
-    otherval ##<<\code{}. 
+    x, ##<<\code{}...
+    thresh, ##<<\code{}...
+    aboveval, ##<<\code{}...
+    belowval ##<<\code{}...
 ){
-  v <- raster::getValues(x)
-  isna=is.na(v)
-  isnotna=!is.na(v)
-  v[isna]=toval
-  v[isnotna]=otherval
-  x <- raster::setValues(x, v)
+  # sets a threshold value (thresh). Any pixels above 
+  # thresh are converted to aboveval
+  # Any pixels bellow or equal to thresh are converted to belowval
+  require(terra)
+  v <- raster::values(x)
+  v[v>thresh]=aboveval
+  v[v<=thresh]=belowval
+  x <- terra::setValues(x, v)
   return(x)
 ### \code{}... 
 } , ex=function(){

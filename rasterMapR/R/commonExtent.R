@@ -17,7 +17,7 @@ commonExtent <- structure(function #Common extent between raster objects
   # extent that includes all the listed elements (union) orthe minimum
   # common extent (intersection).
   for (i in 1: length(inlist)){
-    ext=as.matrix(extent(inlist[[i]]))
+    ext=as.matrix(ext(inlist[[i]]))
     if(i==1){
       extall=ext} else {extall=rbind(extall, ext)}
   }
@@ -35,7 +35,7 @@ commonExtent <- structure(function #Common extent between raster objects
     maxy=max(extall$max[c(seq(2,nrow(extall), by=2))])
   } else {stop("unvalid method name")
     }
-  e=extent(minx, maxx, miny, maxy)
+  e=ext(minx, maxx, miny, maxy)
   return(e)
 ### \code{}... 
 } , ex=function(){
